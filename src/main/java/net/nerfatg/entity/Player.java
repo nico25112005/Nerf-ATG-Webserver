@@ -1,13 +1,5 @@
 package net.nerfatg.entity;
 
-import org.hibernate.annotations.Entity;
-
-import javax.persistence.Column;
-import javax.persistence.Id;
-import javax.persistence.Table;
-
-
-
 public class Player {
 
 
@@ -15,8 +7,6 @@ public class Player {
     private String name;
     private double longitude;
     private double latitude;
-
-    public Player() {}
 
     public Player(String name, double longitude, double latitude) {
         this.name = name;
