@@ -12,6 +12,16 @@ import java.util.Properties;
 
 public class NerfATGServer {
 
+    /*
+        create table players (
+            id BIGINT NOT NULL auto_increment,
+            name VARCHAR(20),
+            longitude DOUBLE,
+            latitude DOUBLE,
+        PRIMARY KEY (id)
+    );
+     */
+
     private final Properties properties;
     private final SessionFactory factory;
 
@@ -28,8 +38,9 @@ public class NerfATGServer {
     }
 
     private void launch(String[] args) {
-        addPlayer(new Player("GodGotzi", 42.1123123, 11.123123));
-        addPlayer(new Player("Nico", 13.123123, 42.123123));
+        for (int i = 1; i <= 24; i++) {
+            addPlayer(new Player("Player" + i, 13.123123 + (double) i, 42.123123));
+        }
     }
 
     public long addPlayer(Player player) {

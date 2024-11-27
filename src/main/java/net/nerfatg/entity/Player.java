@@ -2,7 +2,6 @@ package net.nerfatg.entity;
 
 public class Player {
 
-
     private long id;
     private String name;
     private double longitude;
