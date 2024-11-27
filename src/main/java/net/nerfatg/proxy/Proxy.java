@@ -4,6 +4,7 @@ import net.nerfatg.NerfATGServer;
 
 import java.io.IOException;
 import java.net.*;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -13,9 +14,9 @@ import java.util.logging.Logger;
 
 public class Proxy extends Thread {
 
-    private DatagramSocket socket;
+    private ServerSocket server;
     private boolean running;
-    private final byte[] buffer = new byte[257];
+    private final byte[] buffer = new byte[64];
     private final HashMap<PacketType, List<PacketHandle>> handles;
 
     public Proxy(NerfATGServer server) {
@@ -25,9 +26,8 @@ public class Proxy extends Thread {
         }
 
         try {
-            SocketAddress addr = new InetSocketAddress("localhost", 25565);
-            this.socket = new DatagramSocket(addr);
-        } catch (SocketException e) {
+            this.server = new ServerSocket(25565);
+        } catch (IOException e) {
             Logger.getLogger(getClass().getName()).log(Level.SEVERE, e.getMessage());
         }
     }
@@ -48,20 +48,22 @@ public class Proxy extends Thread {
             while (running) {
                 spin();
             }
+
+            server.close();
         } catch (IOException e) {
             Logger.getLogger(getClass().getName()).log(Level.SEVERE, e.getMessage());
         } finally {
             running = false;
-            socket.close();
         }
     }
 
     public void spin() throws IOException {
         DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-        socket.receive(packet);
+
+        ByteBuffer buf = ByteBuffer.wrap(packet.getData());
 
         // first byte is packet type
-        int index = buffer[0];
+        int index = buf.getInt();
         PacketType type = PacketType.values()[index];
 
         InetAddress address = packet.getAddress();
@@ -71,14 +73,14 @@ public class Proxy extends Thread {
 
         synchronized (handles) {
             for (PacketHandle handle : handles.get(type)) {
-                Optional<byte[]> bytes = handle.handle(packet.getData());
+                Optional<byte[]> bytes = handle.handle(buf);
                 bytes.ifPresent(responses::add);
             }
         }
 
         for (byte[] response : responses) {
             DatagramPacket responsePacket = new DatagramPacket(response, response.length, address, port);
-            socket.send(responsePacket);
+            server.send(responsePacket);
         }
     }
 
