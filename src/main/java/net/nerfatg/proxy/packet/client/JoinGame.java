@@ -6,12 +6,13 @@ import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 
-public class AppStarted extends Packet<ClientPacketType> {
-
+public class JoinGame extends Packet<ClientPacketType> {
     private String playerId;
+    private String playerName;
+    private String gameName;
 
-    public AppStarted(ByteBuffer buffer) throws BufferOverflowException {
-        super(buffer, ClientPacketType.AppStarted);
+    public JoinGame(ByteBuffer buffer) throws BufferOverflowException {
+        super(buffer, ClientPacketType.CreateGame);
 
         fromBytes(buffer);
     }
@@ -22,6 +23,14 @@ public class AppStarted extends Packet<ClientPacketType> {
 
         buffer.get(macIdBytes);
         playerId = new String(macIdBytes);
+
+        byte[] nameBytes = new byte[16];
+        buffer.get(nameBytes);
+        playerName = new String(nameBytes);
+
+        byte[] gameNameBytes = new byte[5];
+        buffer.get(nameBytes);
+        gameName = new String(gameNameBytes);
     }
 
     @Override
@@ -29,6 +38,9 @@ public class AppStarted extends Packet<ClientPacketType> {
         ByteBuffer dbuf = ByteBuffer.allocate(size);
 
         dbuf.put(playerId.getBytes());
+        dbuf.put(playerName.getBytes());
+        dbuf.put(gameName.getBytes());
+
         return dbuf.array();
     }
 
@@ -36,8 +48,11 @@ public class AppStarted extends Packet<ClientPacketType> {
         return playerId;
     }
 
-    @Override
-    public ClientPacketType getType() {
-        return super.getType();
+    public String getGameName() {
+        return gameName;
+    }
+
+    public String getPlayerName() {
+        return playerName;
     }
 }

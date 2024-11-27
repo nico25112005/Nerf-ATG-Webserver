@@ -1,17 +1,19 @@
 package net.nerfatg.proxy.packet.client;
 
+import net.nerfatg.game.GameType;
 import net.nerfatg.proxy.packet.Packet;
 
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 
-public class AppStarted extends Packet<ClientPacketType> {
-
+public class CreateGame extends Packet<ClientPacketType> {
     private String playerId;
+    private GameType gameType;
+    private String gameName;
 
-    public AppStarted(ByteBuffer buffer) throws BufferOverflowException {
-        super(buffer, ClientPacketType.AppStarted);
+    public CreateGame(ByteBuffer buffer) throws BufferOverflowException {
+        super(buffer, ClientPacketType.CreateGame);
 
         fromBytes(buffer);
     }
@@ -22,6 +24,13 @@ public class AppStarted extends Packet<ClientPacketType> {
 
         buffer.get(macIdBytes);
         playerId = new String(macIdBytes);
+
+        gameType = GameType.values()[buffer.getInt()];
+
+        byte[] nameBytes = new byte[16];
+        buffer.get(nameBytes);
+
+        gameName = new String(nameBytes);
     }
 
     @Override
@@ -29,6 +38,9 @@ public class AppStarted extends Packet<ClientPacketType> {
         ByteBuffer dbuf = ByteBuffer.allocate(size);
 
         dbuf.put(playerId.getBytes());
+        dbuf.putInt(gameType.ordinal());
+        dbuf.put(gameName.getBytes());
+
         return dbuf.array();
     }
 
@@ -36,8 +48,11 @@ public class AppStarted extends Packet<ClientPacketType> {
         return playerId;
     }
 
-    @Override
-    public ClientPacketType getType() {
-        return super.getType();
+    public GameType getGameType() {
+        return gameType;
+    }
+
+    public String getGameName() {
+        return gameName;
     }
 }
