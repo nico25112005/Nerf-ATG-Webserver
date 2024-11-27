@@ -12,6 +12,7 @@ public enum ServerPacketType {
     PlayerBundle,
     /*
     UUID playerID
+    String playerName
     int teamIndex
      */
     PlayerStatus,

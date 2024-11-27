@@ -6,11 +6,11 @@ import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 
-public class AppStarted extends Packet<ClientPacketType> {
+public class PlayerRespawned extends Packet<ClientPacketType> {
 
     private String playerId;
 
-    public AppStarted(ByteBuffer buffer) throws BufferOverflowException {
+    public PlayerRespawned(ByteBuffer buffer) throws BufferOverflowException {
         super(buffer, ClientPacketType.AppStarted);
 
         fromBytes(buffer);
@@ -35,5 +35,4 @@ public class AppStarted extends Packet<ClientPacketType> {
     public String getPlayerId() {
         return playerId;
     }
-
 }
