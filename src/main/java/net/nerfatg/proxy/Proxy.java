@@ -47,17 +47,15 @@ public class Proxy {
             Selector selector = Selector.open();
 
             // Erstelle einen ServerSocketChannel und konfiguriere ihn auf nicht-blockierend
-            serverSocketChannel.bind(new InetSocketAddress(8080));
+            serverSocketChannel.bind(new InetSocketAddress(PORT));
             serverSocketChannel.configureBlocking(false);
 
             // Registriere den ServerSocketChannel für neue Verbindungen
             serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
 
-            System.out.println("NIO-Server (Broadcast) läuft auf Port " + PORT);
-
             // Server-Schleife
             while (running) {
-
+                spin(serverSocketChannel, selector);
             }
         } catch (IOException e) {
             Logger.getLogger(getClass().getName()).log(Level.SEVERE, e.getMessage());
