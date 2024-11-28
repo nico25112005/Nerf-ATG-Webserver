@@ -1,6 +1,7 @@
 package net.nerfatg;
 
 import net.nerfatg.entity.Player;
+import net.nerfatg.proxy.Proxy;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -25,6 +26,8 @@ public class NerfATGServer {
     private final Properties properties;
     private final SessionFactory factory;
 
+    private final Proxy proxy;
+
     public NerfATGServer() throws IOException {
         this.properties = new Properties();
         this.properties.load(getClass().getClassLoader().getResourceAsStream("server.properties"));
@@ -35,30 +38,12 @@ public class NerfATGServer {
         } catch (Exception e) {
             throw new IOException(e.getMessage());
         }
+
+        this.proxy = new Proxy(this);
     }
 
     private void launch(String[] args) {
-        for (int i = 1; i <= 24; i++) {
-            addPlayer(new Player("Player" + i, 13.123123 + (double) i, 42.123123));
-        }
-    }
-
-    public long addPlayer(Player player) {
-        Session session = factory.openSession();
-        Transaction tx = null;
-        long id = 0;
-
-        try {
-            tx = session.beginTransaction();
-            id = (long)session.save(player);
-            tx.commit();
-        } catch (HibernateException e) {
-            if (tx!=null) tx.rollback();
-        } finally {
-            session.close();
-        }
-
-        return id;
+        this.proxy.launch();
     }
 
     public Properties getProperties() {

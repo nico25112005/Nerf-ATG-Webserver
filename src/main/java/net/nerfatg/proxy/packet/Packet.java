@@ -17,5 +17,5 @@ public abstract class Packet<T> {
     }
 
     public abstract void fromBytes(ByteBuffer buffer) throws BufferOverflowException;
-    public abstract byte[] toBytes(int size) throws BufferOverflowException;
+    public abstract void toBytes(ByteBuffer buffer) throws BufferOverflowException;
 }

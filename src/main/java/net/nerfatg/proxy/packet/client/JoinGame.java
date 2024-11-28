@@ -34,14 +34,10 @@ public class JoinGame extends Packet<ClientPacketType> {
     }
 
     @Override
-    public byte[] toBytes(int size) throws BufferUnderflowException {
-        ByteBuffer dbuf = ByteBuffer.allocate(size);
-
+    public void toBytes(ByteBuffer dbuf) throws BufferUnderflowException {
         dbuf.put(playerId.getBytes());
         dbuf.put(playerName.getBytes());
         dbuf.put(gameName.getBytes());
-
-        return dbuf.array();
     }
 
     public String getPlayerId() {

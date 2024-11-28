@@ -24,11 +24,8 @@ public class RefreshGames extends Packet<ClientPacketType> {
     }
 
     @Override
-    public byte[] toBytes(int size) throws BufferUnderflowException {
-        ByteBuffer dbuf = ByteBuffer.allocate(size);
-
+    public void toBytes(ByteBuffer dbuf) throws BufferUnderflowException {
         dbuf.put(playerId.getBytes());
-        return dbuf.array();
     }
 
     public String getPlayerId() {

@@ -38,15 +38,11 @@ public class GameInfo extends Packet<ServerPacketType> {
     }
 
     @Override
-    public byte[] toBytes(int size) throws BufferOverflowException {
-        ByteBuffer buffer = ByteBuffer.allocate(size);
-
+    public void toBytes(ByteBuffer buffer) throws BufferOverflowException {
         buffer.putInt(gameType.ordinal());
         buffer.put(gameId.getBytes());
         buffer.put(gameName.getBytes());
         buffer.putInt(playerCount);
         buffer.putInt(maxPlayer);
-
-        return buffer.array();
     }
 }

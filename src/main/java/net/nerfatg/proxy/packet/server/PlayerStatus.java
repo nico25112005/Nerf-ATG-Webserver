@@ -38,16 +38,12 @@ public class PlayerStatus extends Packet<ServerPacketType> {
     }
 
     @Override
-    public byte[] toBytes(int size) throws BufferOverflowException {
-        ByteBuffer buffer = ByteBuffer.allocate(size);
-
+    public void toBytes(ByteBuffer buffer) throws BufferOverflowException {
         buffer.put(playerId.getBytes());
         buffer.put(playerName.getBytes());
         buffer.putInt(teamIndex);
         buffer.putDouble(longitude);
         buffer.putDouble(latitude);
         buffer.putInt(health);
-
-        return buffer.array();
     }
 }
