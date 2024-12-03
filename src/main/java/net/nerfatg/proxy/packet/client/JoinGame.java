@@ -9,17 +9,17 @@ import java.nio.ByteBuffer;
 public class JoinGame extends Packet<ClientPacketType> {
     private String playerId;
     private String playerName;
-    private String gameName;
+    private String gameId;
 
     public JoinGame(ByteBuffer buffer) throws BufferOverflowException {
         super(buffer, ClientPacketType.JoinGame);
     }
 
-    public JoinGame(String playerId, String playerName, String gameName) {
+    public JoinGame(String playerId, String playerName, String gameId) {
         super(ClientPacketType.JoinGame);
         this.playerId = playerId;
         this.playerName = playerName;
-        this.gameName = gameName;
+        this.gameId = gameId;
     }
 
     @Override
@@ -35,22 +35,22 @@ public class JoinGame extends Packet<ClientPacketType> {
 
         byte[] gameNameBytes = new byte[5];
         buffer.get(nameBytes);
-        gameName = new String(gameNameBytes);
+        gameId = new String(gameNameBytes);
     }
 
     @Override
     public void toBytes(ByteBuffer dbuf) throws BufferUnderflowException {
         dbuf.put(playerId.getBytes());
         dbuf.put(playerName.getBytes());
-        dbuf.put(gameName.getBytes());
+        dbuf.put(gameId.getBytes());
     }
 
     public String getPlayerId() {
         return playerId;
     }
 
-    public String getGameName() {
-        return gameName;
+    public String getGameId() {
+        return gameId;
     }
 
     public String getPlayerName() {
@@ -62,7 +62,7 @@ public class JoinGame extends Packet<ClientPacketType> {
         return "JoinGame{" +
                 "playerId='" + playerId + '\'' +
                 ", playerName='" + playerName + '\'' +
-                ", gameName='" + gameName + '\'' +
+                ", gameName='" + gameId + '\'' +
                 '}';
     }
 }
