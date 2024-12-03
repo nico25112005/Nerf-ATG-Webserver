@@ -1,17 +1,15 @@
 package net.nerfatg;
 
-import net.nerfatg.entity.Player;
 import net.nerfatg.game.GameHandler;
 import net.nerfatg.proxy.Proxy;
 import net.nerfatg.proxy.packet.client.ClientPacketType;
-import org.hibernate.HibernateException;
-import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.hibernate.Transaction;
 import org.hibernate.cfg.Configuration;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Properties;
+import java.util.logging.LogManager;
 
 public class NerfATGServer {
 
@@ -24,6 +22,16 @@ public class NerfATGServer {
         PRIMARY KEY (id)
     );
      */
+
+    public static void loadLoggerConfiguration() {
+        InputStream stream = NerfATGServer.class.getClassLoader().
+                getResourceAsStream("logging.properties");
+        try {
+            LogManager.getLogManager().readConfiguration(stream);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     private final Properties properties;
     private final SessionFactory factory;
@@ -57,6 +65,8 @@ public class NerfATGServer {
     }
 
     public static void main(String[] args) {
+        loadLoggerConfiguration();
+
         final NerfATGServer server;
         try {
             server = new NerfATGServer();

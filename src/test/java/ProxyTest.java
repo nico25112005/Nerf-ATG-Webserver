@@ -16,6 +16,8 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
+import static net.nerfatg.NerfATGServer.loadLoggerConfiguration;
+
 public class ProxyTest {
 
     private static class Handler implements PacketHandle {
@@ -35,6 +37,8 @@ public class ProxyTest {
 
     @Test
     public void receiveTest() throws InterruptedException {
+        loadLoggerConfiguration();
+
         Proxy proxy = new Proxy(25565);
         proxy.registerHandle(ClientPacketType.CreateGame, new Handler());
 

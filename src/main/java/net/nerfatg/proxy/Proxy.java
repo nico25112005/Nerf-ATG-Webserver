@@ -56,14 +56,14 @@ public class Proxy {
             // Registriere den ServerSocketChannel für neue Verbindungen
             serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
 
-            Logger.getLogger(Proxy.class.getName()).log(Level.INFO, "Listening on port " + port);
+            Logger.getLogger(Proxy.class.getSimpleName()).log(Level.INFO, "Listening on port " + port);
 
             // Server-Schleife
             while (running) {
                 spin(serverSocketChannel, selector);
             }
         } catch (IOException e) {
-            Logger.getLogger(getClass().getName()).log(Level.SEVERE, e.getMessage());
+            Logger.getLogger(getClass().getSimpleName()).log(Level.SEVERE, e.getMessage());
         }
     }
 
@@ -93,7 +93,7 @@ public class Proxy {
         // Registriere den neuen ClientChannel beim Selector für Leseoperationen
         clientChannel.register(selector, SelectionKey.OP_READ, ByteBuffer.allocate(64));
         connectedClients.add(clientChannel);
-        Logger.getLogger(getClass().getName()).log(Level.INFO, "Client connected: " + clientChannel.getRemoteAddress());
+        Logger.getLogger(getClass().getSimpleName()).log(Level.INFO, "Client connected: " + clientChannel.getRemoteAddress());
     }
 
     private void handleRead(SelectionKey key) throws IOException {
@@ -103,7 +103,7 @@ public class Proxy {
         int bytesRead = clientChannel.read(buffer);
         if (bytesRead == -1) {
             // Client hat die Verbindung geschlossen
-            Logger.getLogger(getClass().getName()).log(Level.INFO, "Client closed connection!: " + clientChannel.getRemoteAddress());
+            Logger.getLogger(getClass().getSimpleName()).log(Level.INFO, "Client closed connection!: " + clientChannel.getRemoteAddress());
             connectedClients.remove(clientChannel);
             clientChannel.close();
             key.cancel();
@@ -113,7 +113,7 @@ public class Proxy {
         if (buffer.position() == 64) {
             buffer.flip();
             ClientPacketType clientPacketType = ClientPacketType.values()[buffer.getInt()];
-            Logger.getLogger(Proxy.class.getName()).log(Level.INFO, "Server received packet: " + clientPacketType);
+            Logger.getLogger(Proxy.class.getSimpleName()).log(Level.INFO, "Server received packet: " + clientPacketType);
 
             List<Packet<ServerPacketType>> responses = new ArrayList<>();
 
@@ -141,7 +141,7 @@ public class Proxy {
         try {
             playerClients.get(playerId).write(buffer);
         } catch (IOException e) {
-            Logger.getLogger(getClass().getName()).log(Level.SEVERE, e.getMessage());
+            Logger.getLogger(getClass().getSimpleName()).log(Level.SEVERE, e.getMessage());
         }
     }
 
@@ -152,12 +152,12 @@ public class Proxy {
 
         try {
             for (SocketChannel client : connectedClients) {
-                Logger.getLogger(Proxy.class.getName()).log(Level.INFO, "Packet sent to client " + client.getRemoteAddress());
+                Logger.getLogger(Proxy.class.getSimpleName()).log(Level.INFO, "Packet sent to client " + client.getRemoteAddress());
 
                 client.write(buffer.duplicate());
             }
         } catch (IOException e) {
-            Logger.getLogger(getClass().getName()).log(Level.SEVERE, e.getMessage());
+            Logger.getLogger(getClass().getSimpleName()).log(Level.SEVERE, e.getMessage());
         }
     }
 
