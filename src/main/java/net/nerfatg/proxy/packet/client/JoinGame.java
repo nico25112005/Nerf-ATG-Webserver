@@ -12,14 +12,19 @@ public class JoinGame extends Packet<ClientPacketType> {
     private String gameName;
 
     public JoinGame(ByteBuffer buffer) throws BufferOverflowException {
-        super(buffer, ClientPacketType.CreateGame);
+        super(buffer, ClientPacketType.JoinGame);
+    }
 
-        fromBytes(buffer);
+    public JoinGame(String playerId, String playerName, String gameName) {
+        super(ClientPacketType.JoinGame);
+        this.playerId = playerId;
+        this.playerName = playerName;
+        this.gameName = gameName;
     }
 
     @Override
     public void fromBytes(ByteBuffer buffer) throws BufferUnderflowException {
-        byte[] macIdBytes = new byte[6];
+        byte[] macIdBytes = new byte[12];
 
         buffer.get(macIdBytes);
         playerId = new String(macIdBytes);
@@ -50,5 +55,14 @@ public class JoinGame extends Packet<ClientPacketType> {
 
     public String getPlayerName() {
         return playerName;
+    }
+
+    @Override
+    public String toString() {
+        return "JoinGame{" +
+                "playerId='" + playerId + '\'' +
+                ", playerName='" + playerName + '\'' +
+                ", gameName='" + gameName + '\'' +
+                '}';
     }
 }

@@ -17,8 +17,15 @@ public class GameInfo extends Packet<ServerPacketType> {
 
     public GameInfo(ByteBuffer buffer) throws BufferOverflowException {
         super(buffer, ServerPacketType.GameInfo);
+    }
 
-        fromBytes(buffer);
+    public GameInfo(GameType gameType, String gameId, String gameName, int playerCount, int maxPlayer) {
+        super(ServerPacketType.GameInfo);
+        this.gameType = gameType;
+        this.gameId = gameId;
+        this.gameName = gameName;
+        this.playerCount = playerCount;
+        this.maxPlayer = maxPlayer;
     }
 
     @Override
@@ -44,5 +51,16 @@ public class GameInfo extends Packet<ServerPacketType> {
         buffer.put(gameName.getBytes());
         buffer.putInt(playerCount);
         buffer.putInt(maxPlayer);
+    }
+
+    @Override
+    public String toString() {
+        return "GameInfo{" +
+                "gameType=" + gameType +
+                ", gameId='" + gameId + '\'' +
+                ", gameName='" + gameName + '\'' +
+                ", playerCount=" + playerCount +
+                ", maxPlayer=" + maxPlayer +
+                '}';
     }
 }

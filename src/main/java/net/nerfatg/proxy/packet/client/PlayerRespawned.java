@@ -11,14 +11,17 @@ public class PlayerRespawned extends Packet<ClientPacketType> {
     private String playerId;
 
     public PlayerRespawned(ByteBuffer buffer) throws BufferOverflowException {
-        super(buffer, ClientPacketType.AppStarted);
+        super(buffer, ClientPacketType.PlayerRespawned);
+    }
 
-        fromBytes(buffer);
+    public PlayerRespawned(String playerId) {
+        super(ClientPacketType.PlayerRespawned);
+        this.playerId = playerId;
     }
 
     @Override
     public void fromBytes(ByteBuffer buffer) throws BufferUnderflowException {
-        byte[] macIdBytes = new byte[6];
+        byte[] macIdBytes = new byte[12];
 
         buffer.get(macIdBytes);
         playerId = new String(macIdBytes);
@@ -31,5 +34,12 @@ public class PlayerRespawned extends Packet<ClientPacketType> {
 
     public String getPlayerId() {
         return playerId;
+    }
+
+    @Override
+    public String toString() {
+        return "PlayerRespawned{" +
+                "playerId='" + playerId + '\'' +
+                '}';
     }
 }

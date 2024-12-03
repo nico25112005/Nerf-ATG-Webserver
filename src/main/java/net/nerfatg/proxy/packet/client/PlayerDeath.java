@@ -11,14 +11,18 @@ public class PlayerDeath extends Packet<ClientPacketType> {
     private String playerId;
 
     public PlayerDeath(ByteBuffer buffer) throws BufferOverflowException {
-        super(buffer, ClientPacketType.AppStarted);
+        super(buffer, ClientPacketType.PlayerDeath);
+    }
 
-        fromBytes(buffer);
+    public PlayerDeath(String playerId) {
+        super(ClientPacketType.PlayerDeath);
+
+        this.playerId = playerId;
     }
 
     @Override
     public void fromBytes(ByteBuffer buffer) throws BufferUnderflowException {
-        byte[] macIdBytes = new byte[6];
+        byte[] macIdBytes = new byte[12];
 
         buffer.get(macIdBytes);
         playerId = new String(macIdBytes);
@@ -33,6 +37,10 @@ public class PlayerDeath extends Packet<ClientPacketType> {
         return playerId;
     }
 
-
-
+    @Override
+    public String toString() {
+        return "PlayerDeath{" +
+                "playerId='" + playerId + '\'' +
+                '}';
+    }
 }

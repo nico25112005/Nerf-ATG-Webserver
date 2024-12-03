@@ -16,14 +16,22 @@ public class PlayerStatus extends Packet<ServerPacketType> {
     private int health;
 
     public PlayerStatus(ByteBuffer buffer) throws BufferOverflowException {
-        super(buffer, ServerPacketType.GameInfo);
+        super(buffer, ServerPacketType.PlayerStatus);
+    }
 
-        fromBytes(buffer);
+    public PlayerStatus(String playerId, String playerName, int teamIndex, double longitude, double latitude, int health) {
+        super(ServerPacketType.PlayerStatus);
+        this.playerId = playerId;
+        this.playerName = playerName;
+        this.teamIndex = teamIndex;
+        this.longitude = longitude;
+        this.latitude = latitude;
+        this.health = health;
     }
 
     @Override
     public void fromBytes(ByteBuffer buffer) throws BufferOverflowException {
-        byte[] playerIdBytes = new byte[6];
+        byte[] playerIdBytes = new byte[12];
         buffer.get(playerIdBytes);
         playerId = new String(playerIdBytes);
 
@@ -45,5 +53,17 @@ public class PlayerStatus extends Packet<ServerPacketType> {
         buffer.putDouble(longitude);
         buffer.putDouble(latitude);
         buffer.putInt(health);
+    }
+
+    @Override
+    public String toString() {
+        return "PlayerStatus{" +
+                "playerId='" + playerId + '\'' +
+                ", playerName='" + playerName + '\'' +
+                ", teamIndex=" + teamIndex +
+                ", longitude=" + longitude +
+                ", latitude=" + latitude +
+                ", health=" + health +
+                '}';
     }
 }

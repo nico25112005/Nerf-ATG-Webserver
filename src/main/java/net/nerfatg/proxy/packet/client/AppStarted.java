@@ -12,13 +12,16 @@ public class AppStarted extends Packet<ClientPacketType> {
 
     public AppStarted(ByteBuffer buffer) throws BufferOverflowException {
         super(buffer, ClientPacketType.AppStarted);
+    }
 
-        fromBytes(buffer);
+    public AppStarted(String playerId) {
+        super(ClientPacketType.AppStarted);
+        this.playerId = playerId;
     }
 
     @Override
     public void fromBytes(ByteBuffer buffer) throws BufferUnderflowException {
-        byte[] macIdBytes = new byte[6];
+        byte[] macIdBytes = new byte[12];
 
         buffer.get(macIdBytes);
         playerId = new String(macIdBytes);
@@ -33,4 +36,10 @@ public class AppStarted extends Packet<ClientPacketType> {
         return playerId;
     }
 
+    @Override
+    public String toString() {
+        return "AppStarted{" +
+                "playerId='" + playerId + '\'' +
+                '}';
+    }
 }

@@ -15,14 +15,21 @@ public class PlayerReady extends Packet<ClientPacketType> {
     private float damping;
 
     public PlayerReady(ByteBuffer buffer) throws BufferOverflowException {
-        super(buffer, ClientPacketType.CreateGame);
+        super(buffer, ClientPacketType.PlayerReady);
+    }
 
-        fromBytes(buffer);
+    public PlayerReady(String playerId, int health, WeaponType weaponType, float damping) {
+        super(ClientPacketType.PlayerReady);
+
+        this.playerId = playerId;
+        this.health = health;
+        this.weaponType = weaponType;
+        this.damping = damping;
     }
 
     @Override
     public void fromBytes(ByteBuffer buffer) throws BufferUnderflowException {
-        byte[] macIdBytes = new byte[6];
+        byte[] macIdBytes = new byte[12];
         buffer.get(macIdBytes);
         playerId = new String(macIdBytes);
 
@@ -53,5 +60,15 @@ public class PlayerReady extends Packet<ClientPacketType> {
 
     public WeaponType getWeaponType() {
         return weaponType;
+    }
+
+    @Override
+    public String toString() {
+        return "PlayerReady{" +
+                "playerId='" + playerId + '\'' +
+                ", health=" + health +
+                ", weaponType=" + weaponType +
+                ", damping=" + damping +
+                '}';
     }
 }

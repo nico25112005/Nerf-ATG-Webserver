@@ -11,14 +11,17 @@ public class ActiveAbility extends Packet<ClientPacketType> {
     private String playerId;
 
     public ActiveAbility(ByteBuffer buffer) throws BufferOverflowException {
-        super(buffer, ClientPacketType.AppStarted);
+        super(buffer, ClientPacketType.ActiveAbility);
+    }
 
-        fromBytes(buffer);
+    public ActiveAbility(String playerId) {
+        super(ClientPacketType.ActiveAbility);
+        this.playerId = playerId;
     }
 
     @Override
     public void fromBytes(ByteBuffer buffer) throws BufferUnderflowException {
-        byte[] macIdBytes = new byte[6];
+        byte[] macIdBytes = new byte[12];
 
         buffer.get(macIdBytes);
         playerId = new String(macIdBytes);
@@ -31,5 +34,12 @@ public class ActiveAbility extends Packet<ClientPacketType> {
 
     public String getPlayerId() {
         return playerId;
+    }
+
+    @Override
+    public String toString() {
+        return "ActiveAbility{" +
+                "playerId='" + playerId + '\'' +
+                '}';
     }
 }

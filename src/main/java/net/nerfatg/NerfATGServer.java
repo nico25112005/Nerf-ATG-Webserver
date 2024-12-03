@@ -1,7 +1,9 @@
 package net.nerfatg;
 
 import net.nerfatg.entity.Player;
+import net.nerfatg.game.GameHandler;
 import net.nerfatg.proxy.Proxy;
+import net.nerfatg.proxy.packet.client.ClientPacketType;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -27,6 +29,7 @@ public class NerfATGServer {
     private final SessionFactory factory;
 
     private final Proxy proxy;
+    private final GameHandler gameHandler;
 
     public NerfATGServer() throws IOException {
         this.properties = new Properties();
@@ -39,7 +42,10 @@ public class NerfATGServer {
             throw new IOException(e.getMessage());
         }
 
-        this.proxy = new Proxy(this);
+        this.proxy = new Proxy(25565);
+        this.gameHandler = new GameHandler();
+
+        this.proxy.registerHandle(ClientPacketType.CreateGame, this.gameHandler);
     }
 
     private void launch(String[] args) {

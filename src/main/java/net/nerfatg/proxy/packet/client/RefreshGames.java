@@ -11,13 +11,16 @@ public class RefreshGames extends Packet<ClientPacketType> {
 
     public RefreshGames(ByteBuffer buffer) throws BufferOverflowException {
         super(buffer, ClientPacketType.RefreshGames);
+    }
 
-        fromBytes(buffer);
+    public RefreshGames(String playerId) {
+        super(ClientPacketType.RefreshGames);
+        this.playerId = playerId;
     }
 
     @Override
     public void fromBytes(ByteBuffer buffer) throws BufferUnderflowException {
-        byte[] macIdBytes = new byte[6];
+        byte[] macIdBytes = new byte[12];
 
         buffer.get(macIdBytes);
         playerId = new String(macIdBytes);
@@ -30,5 +33,12 @@ public class RefreshGames extends Packet<ClientPacketType> {
 
     public String getPlayerId() {
         return playerId;
+    }
+
+    @Override
+    public String toString() {
+        return "RefreshGames{" +
+                "playerId='" + playerId + '\'' +
+                '}';
     }
 }

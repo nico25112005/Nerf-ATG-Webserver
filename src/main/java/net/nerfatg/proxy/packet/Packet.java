@@ -12,6 +12,10 @@ public abstract class Packet<T> {
         this.type = type;
     }
 
+    public Packet(T type) {
+        this.type = type;
+    }
+
     public T getType() {
         return type;
     }

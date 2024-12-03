@@ -1,6 +1,5 @@
 package net.nerfatg.proxy;
 
-import net.nerfatg.NerfATGServer;
 import net.nerfatg.proxy.packet.Packet;
 import net.nerfatg.proxy.packet.client.ClientPacketType;
 import net.nerfatg.proxy.packet.server.ServerPacketType;
@@ -18,17 +17,21 @@ import java.util.logging.Logger;
 
 public class Proxy {
 
-    private static final int PORT = 8080;
     private static final Set<SocketChannel> connectedClients = Collections.synchronizedSet(new HashSet<>());
+    private static final HashMap<String, SocketChannel> playerClients = new HashMap<>();
+
+    private final int port;
 
     private boolean running;
     private final HashMap<ClientPacketType, List<PacketHandle>> handles;
 
-    public Proxy(NerfATGServer server) {
+    public Proxy(int port) {
         this.handles = new HashMap<>();
         for (ClientPacketType type : ClientPacketType.values()) {
             this.handles.put(type, new ArrayList<>());
         }
+
+        this.port = port;
     }
 
     public void registerHandle(ClientPacketType type, PacketHandle handle) {
@@ -47,11 +50,13 @@ public class Proxy {
             Selector selector = Selector.open();
 
             // Erstelle einen ServerSocketChannel und konfiguriere ihn auf nicht-blockierend
-            serverSocketChannel.bind(new InetSocketAddress(PORT));
+            serverSocketChannel.bind(new InetSocketAddress(port));
             serverSocketChannel.configureBlocking(false);
 
             // Registriere den ServerSocketChannel für neue Verbindungen
             serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
+
+            System.out.println("Listening on port " + port);
 
             // Server-Schleife
             while (running) {
@@ -86,14 +91,14 @@ public class Proxy {
         clientChannel.configureBlocking(false);
 
         // Registriere den neuen ClientChannel beim Selector für Leseoperationen
-        clientChannel.register(selector, SelectionKey.OP_READ);
+        clientChannel.register(selector, SelectionKey.OP_READ, ByteBuffer.allocate(64));
         connectedClients.add(clientChannel);
         System.out.println("New Client connected: " + clientChannel.getRemoteAddress());
     }
 
     private void handleRead(SelectionKey key) throws IOException {
         SocketChannel clientChannel = (SocketChannel) key.channel();
-        ByteBuffer buffer = ByteBuffer.allocate(64);
+        ByteBuffer buffer = (ByteBuffer) key.attachment();
 
         int bytesRead = clientChannel.read(buffer);
         if (bytesRead == -1) {
@@ -105,22 +110,55 @@ public class Proxy {
             return;
         }
 
-        // Nachricht verarbeiten
-        buffer.flip();
-        ClientPacketType clientPacketType = ClientPacketType.values()[buffer.getInt()];
+        System.out.println("Buffer position: " + buffer.position());
 
-        List<Packet<ServerPacketType>> responses = new ArrayList<>();
+        if (buffer.position() == 64) {
+            buffer.flip();
+            ClientPacketType clientPacketType = ClientPacketType.values()[buffer.getInt()];
 
-        for (PacketHandle handle : handles.get(clientPacketType)) {
-            handle.handle(buffer).ifPresent(responses::add);
+            List<Packet<ServerPacketType>> responses = new ArrayList<>();
+
+            for (PacketHandle handle : handles.get(clientPacketType)) {
+                handle.handle(buffer.duplicate()).ifPresent(responses::add);
+            }
+
+            for (Packet<ServerPacketType> response : responses) {
+                ByteBuffer dbuf = ByteBuffer.allocate(64);
+                dbuf.putInt(response.getType().ordinal());
+                response.toBytes(dbuf);
+
+                clientChannel.write(dbuf);
+            }
+
+            buffer.clear();
         }
+    }
 
-        for (Packet<ServerPacketType> response : responses) {
-            ByteBuffer dbuf = ByteBuffer.allocate(64);
-            dbuf.putInt(response.getType().ordinal());
-            response.toBytes(dbuf);
+    public void send(String playerId, Packet<ServerPacketType> packet) {
+        ByteBuffer buffer = ByteBuffer.allocate(64);
+        buffer.putInt(packet.getType().ordinal());
+        packet.toBytes(buffer);
 
-            clientChannel.write(dbuf);
+        try {
+            playerClients.get(playerId).write(buffer);
+        } catch (IOException e) {
+            Logger.getLogger(getClass().getName()).log(Level.SEVERE, e.getMessage());
+        }
+    }
+
+    public void broadcast(Packet<ServerPacketType> packet) {
+        ByteBuffer buffer = ByteBuffer.allocate(64);
+        buffer.putInt(packet.getType().ordinal());
+        packet.toBytes(buffer);
+
+        try {
+            for (SocketChannel client : connectedClients) {
+                System.out.println("Packet send to client " + client.getRemoteAddress());
+                client.write(buffer.duplicate());
+                System.out.println(client.isOpen());
+            }
+        } catch (IOException e) {
+            Logger.getLogger(getClass().getName()).log(Level.SEVERE, e.getMessage());
         }
     }
 
