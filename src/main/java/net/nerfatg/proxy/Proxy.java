@@ -115,6 +115,7 @@ public class Proxy {
         if (buffer.position() == 64) {
             buffer.flip();
             ClientPacketType clientPacketType = ClientPacketType.values()[buffer.getInt()];
+            Logger.getLogger(Proxy.class.getName()).log(Level.INFO, clientPacketType.toString());
 
             List<Packet<ServerPacketType>> responses = new ArrayList<>();
 
