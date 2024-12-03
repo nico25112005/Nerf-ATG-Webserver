@@ -26,7 +26,6 @@ public class ProxyTest {
 
             CreateGame packet = new CreateGame(buffer);
             Logger.getLogger("Server").info("Server received client packet: " + packet);
-            System.out.println(packet);
 
             GameInfo gameInfo = new GameInfo(packet.getGameType(), "D512A", packet.getGameName(), 0, 10);
 
@@ -43,7 +42,11 @@ public class ProxyTest {
 
         Thread.sleep(5000);
 
-        for (int i = 0; i < 1000; i++) {
+        final int clientCount = 10;
+
+        AtomicInteger counter = new AtomicInteger(0);
+
+        for (int i = 0; i < clientCount; i++) {
             new Thread(() -> {
                 try (Socket socket = new Socket("localhost", 25565)) {
                     Logger.getLogger("Client").info("Connected to server");
@@ -55,10 +58,17 @@ public class ProxyTest {
                     packet.toBytes(buffer);
 
                     socket.getOutputStream().write(buffer.array());
-                } catch (IOException e) {
+
+                    Thread.sleep(500);
+                    counter.incrementAndGet();
+                } catch (IOException | InterruptedException e) {
                     Logger.getLogger("Client").warning(e.getMessage());
                 }
             }).start();
+        }
+
+        while (counter.get() < clientCount) {
+            Thread.sleep(100);
         }
     }
 
