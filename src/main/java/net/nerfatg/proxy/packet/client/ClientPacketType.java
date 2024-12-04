@@ -1,7 +1,7 @@
 package net.nerfatg.proxy.packet.client;
 
 public enum ClientPacketType {
-    AppStarted,
+    BlasterConnected,
     /*
     UUID playerID
      */

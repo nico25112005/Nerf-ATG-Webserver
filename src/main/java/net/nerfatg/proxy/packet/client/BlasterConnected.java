@@ -6,16 +6,16 @@ import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 
-public class AppStarted extends Packet<ClientPacketType> {
+public class BlasterConnected extends Packet<ClientPacketType> {
 
     private String playerId;
 
-    public AppStarted(ByteBuffer buffer) throws BufferOverflowException {
-        super(buffer, ClientPacketType.AppStarted);
+    public BlasterConnected(ByteBuffer buffer) throws BufferOverflowException {
+        super(buffer, ClientPacketType.BlasterConnected);
     }
 
-    public AppStarted(String playerId) {
-        super(ClientPacketType.AppStarted);
+    public BlasterConnected(String playerId) {
+        super(ClientPacketType.BlasterConnected);
         this.playerId = playerId;
     }
 
@@ -38,7 +38,7 @@ public class AppStarted extends Packet<ClientPacketType> {
 
     @Override
     public String toString() {
-        return "AppStarted{" +
+        return "BlasterConnected{" +
                 "playerId='" + playerId + '\'' +
                 '}';
     }

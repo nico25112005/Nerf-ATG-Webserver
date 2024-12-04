@@ -1,15 +1,23 @@
 package net.nerfatg;
 
 import net.nerfatg.game.GameHandler;
+import net.nerfatg.proxy.PacketHandle;
 import net.nerfatg.proxy.Proxy;
+import net.nerfatg.proxy.packet.Packet;
+import net.nerfatg.proxy.packet.client.BlasterConnected;
 import net.nerfatg.proxy.packet.client.ClientPacketType;
+import net.nerfatg.proxy.packet.server.PlayerInfo;
+import net.nerfatg.proxy.packet.server.ServerPacketType;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 public class NerfATGServer {
 
@@ -54,6 +62,18 @@ public class NerfATGServer {
         this.gameHandler = new GameHandler();
 
         this.proxy.registerHandle(ClientPacketType.CreateGame, this.gameHandler);
+        this.proxy.registerHandle(ClientPacketType.BlasterConnected, new PacketHandle() {
+            @Override
+            public Optional<Packet<ServerPacketType>> handle(ByteBuffer buffer) {
+                BlasterConnected blasterConnected = new BlasterConnected(buffer);
+
+                Logger.getLogger(getClass().getSimpleName()).info(blasterConnected.toString());
+
+                PlayerInfo info = new PlayerInfo(blasterConnected.getPlayerId(), "Nico", 0);
+
+                return Optional.of(info);
+            }
+        });
     }
 
     private void launch(String[] args) {

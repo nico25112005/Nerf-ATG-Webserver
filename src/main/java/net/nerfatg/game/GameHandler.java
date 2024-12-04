@@ -8,6 +8,7 @@ import net.nerfatg.proxy.packet.server.ServerPacketType;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.logging.Logger;
 
 public class GameHandler implements PacketHandle {
 
@@ -24,6 +25,9 @@ public class GameHandler implements PacketHandle {
     @Override
     public Optional<Packet<ServerPacketType>> handle(ByteBuffer buffer) {
         CreateGame packet = new CreateGame(buffer);
+
+        Logger.getLogger(getClass().getSimpleName()).info("Game Handler handling " + packet);
+
         Game game = new Game("9D6A3", packet.getPlayerId(), packet.getGameType(), packet.getGameName());
         add(game);
 

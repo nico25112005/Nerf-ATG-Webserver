@@ -31,11 +31,13 @@ public class ProxyTest {
 
             GameInfo gameInfo = new GameInfo(packet.getGameType(), "D512A", packet.getGameName(), 0, 10);
 
+
+
             return Optional.of(gameInfo);
         }
     }
 
-    @Test
+
     public void receiveTest() throws InterruptedException {
         loadLoggerConfiguration();
 
@@ -76,7 +78,7 @@ public class ProxyTest {
         }
     }
 
-
+    @Test
     public void sendTest() throws InterruptedException {
         Proxy proxy = new Proxy(25564);
         proxy.registerHandle(ClientPacketType.CreateGame, new Handler());

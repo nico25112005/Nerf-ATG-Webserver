@@ -125,6 +125,9 @@ public class Proxy {
                 ByteBuffer dbuf = ByteBuffer.allocate(64);
                 dbuf.putInt(response.getType().ordinal());
                 response.toBytes(dbuf);
+                dbuf.position(0);
+
+                Logger.getLogger(getClass().getSimpleName()).log(Level.INFO, "Send Response: " + response);
 
                 clientChannel.write(dbuf);
             }

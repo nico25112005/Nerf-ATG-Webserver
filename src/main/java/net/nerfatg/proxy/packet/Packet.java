@@ -8,6 +8,7 @@ public abstract class Packet<T> {
     private final T type;
 
     public Packet(ByteBuffer buffer, T type) throws BufferOverflowException {
+
         this.fromBytes(buffer);
         this.type = type;
     }

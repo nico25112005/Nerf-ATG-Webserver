@@ -12,11 +12,11 @@ public class PlayerInfo extends Packet<ServerPacketType> {
     private int teamIndex;
 
     public PlayerInfo(ByteBuffer buffer) throws BufferOverflowException {
-        super(buffer, ServerPacketType.GameInfo);
+        super(buffer, ServerPacketType.PlayerInfo);
     }
 
     public PlayerInfo(String playerId, String playerName, int teamIndex) {
-        super(ServerPacketType.GameInfo);
+        super(ServerPacketType.PlayerInfo);
         this.playerId = playerId;
         this.playerName = playerName;
         this.teamIndex = teamIndex;
@@ -37,8 +37,8 @@ public class PlayerInfo extends Packet<ServerPacketType> {
 
     @Override
     public void toBytes(ByteBuffer buffer) throws BufferOverflowException {
-        buffer.put(playerId.getBytes());
-        buffer.put(playerName.getBytes());
+        buffer.put(String.format("%s-12", playerId).getBytes());
+        buffer.put(String.format("%s-16", playerName).getBytes());
         buffer.putInt(teamIndex);
     }
 

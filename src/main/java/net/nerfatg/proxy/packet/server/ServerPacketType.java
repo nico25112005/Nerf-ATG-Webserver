@@ -9,7 +9,7 @@ public enum ServerPacketType {
     int playerCount
     int maxPlayer
      */
-    PlayerBundle,
+    PlayerInfo,
     /*
     UUID playerID
     String playerName
