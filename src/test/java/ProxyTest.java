@@ -2,11 +2,10 @@ import net.nerfatg.game.GameType;
 import net.nerfatg.proxy.PacketHandle;
 import net.nerfatg.proxy.Proxy;
 import net.nerfatg.proxy.packet.Packet;
-import net.nerfatg.proxy.packet.client.ClientPacketType;
-import net.nerfatg.proxy.packet.client.CreateGame;
-import net.nerfatg.proxy.packet.server.GameInfo;
-import net.nerfatg.proxy.packet.server.PlayerStatus;
-import net.nerfatg.proxy.packet.server.ServerPacketType;
+import net.nerfatg.proxy.packet.PacketAction;
+import net.nerfatg.proxy.packet.PacketType;
+import net.nerfatg.proxy.packet.packets.CreateGame;
+import net.nerfatg.proxy.packet.packets.GameInfo;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -23,17 +22,17 @@ public class ProxyTest {
     private static class Handler implements PacketHandle {
 
         @Override
-        public Optional<Packet<ServerPacketType>> handle(ByteBuffer buffer) {
+        public Optional<Packet> handle(ByteBuffer buffer) {
             // System.out.println(new String(bytes));
 
             CreateGame packet = new CreateGame(buffer);
             Logger.getLogger("Server").info("Server received client packet: " + packet);
 
-            GameInfo gameInfo = new GameInfo(packet.getGameType(), "D512A", packet.getGameName(), 0, 10);
+            // GameInfo gameInfo = new GameInfo(packet.getGameType(), "D512A", packet.getGameName(), 0, 10, PacketAction.Add);
 
 
 
-            return Optional.of(gameInfo);
+            return Optional.empty();
         }
     }
 
@@ -42,7 +41,7 @@ public class ProxyTest {
         loadLoggerConfiguration();
 
         Proxy proxy = new Proxy(25565);
-        proxy.registerHandle(ClientPacketType.CreateGame, new Handler());
+        proxy.registerHandle(PacketType.CreateGame, new Handler());
 
         new Thread(proxy::launch).start();
 
@@ -57,10 +56,10 @@ public class ProxyTest {
                 try (Socket socket = new Socket("localhost", 25565)) {
                     Logger.getLogger("Client").info("Connected to server");
 
-                    CreateGame packet = new CreateGame("A90DA31AD316", GameType.Team, "Testgame");
+                    CreateGame packet = new CreateGame("A90DA31AD316", GameType.Team, "Testgame", (byte)0, PacketAction.Generic);
 
                     ByteBuffer buffer = ByteBuffer.allocate(64);
-                    buffer.putInt(ClientPacketType.CreateGame.ordinal());
+                    buffer.putInt(PacketType.CreateGame.ordinal());
                     packet.toBytes(buffer);
 
                     socket.getOutputStream().write(buffer.array());
@@ -81,7 +80,7 @@ public class ProxyTest {
     @Test
     public void sendTest() throws InterruptedException {
         Proxy proxy = new Proxy(25564);
-        proxy.registerHandle(ClientPacketType.CreateGame, new Handler());
+        proxy.registerHandle(PacketType.CreateGame, new Handler());
 
         new Thread(proxy::launch).start();
 
@@ -98,7 +97,7 @@ public class ProxyTest {
                     socket.getInputStream().read(bytes, 0, Math.min(socket.getInputStream().available(), bytes.length));
 
                     ByteBuffer dbuf = ByteBuffer.wrap(bytes);
-                    ServerPacketType packetType = ServerPacketType.values()[dbuf.getInt()];
+                    PacketType packetType = PacketType.values()[dbuf.getInt()];
                     System.out.println("Received packet from Server!!!!!: " + packetType);
 
                     GameInfo gameInfo = new GameInfo(dbuf);
@@ -114,7 +113,7 @@ public class ProxyTest {
         Thread.sleep(1000);
 
         proxy.broadcast(
-                new GameInfo(GameType.Team, "DA21AC", "TestGame", 0, 10)
+                new GameInfo(GameType.Team, "DA21AC", "TestGame", (byte)0, (byte)10, PacketAction.Generic)
         );
 
         while (finishedCount.get() < 5) {}

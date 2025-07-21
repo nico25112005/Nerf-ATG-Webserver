@@ -1,8 +1,7 @@
 package net.nerfatg.proxy;
 
 import net.nerfatg.proxy.packet.Packet;
-import net.nerfatg.proxy.packet.client.ClientPacketType;
-import net.nerfatg.proxy.packet.server.ServerPacketType;
+import net.nerfatg.proxy.packet.PacketType;
 
 import java.io.IOException;
 import java.net.*;
@@ -23,22 +22,22 @@ public class Proxy {
     private final int port;
 
     private boolean running;
-    private final HashMap<ClientPacketType, List<PacketHandle>> handles;
+    private final HashMap<PacketType, List<PacketHandle>> handles;
 
     public Proxy(int port) {
         this.handles = new HashMap<>();
-        for (ClientPacketType type : ClientPacketType.values()) {
+        for (PacketType type : PacketType.values()) {
             this.handles.put(type, new ArrayList<>());
         }
 
         this.port = port;
     }
 
-    public void registerHandle(ClientPacketType type, PacketHandle handle) {
+    public void registerHandle(PacketType type, PacketHandle handle) {
         handles.get(type).add(handle);
     }
 
-    public void unregister(ClientPacketType type, PacketHandle handle) {
+    public void unregister(PacketType type, PacketHandle handle) {
         handles.get(type).remove(handle);
     }
 
@@ -112,16 +111,16 @@ public class Proxy {
 
         if (buffer.position() == 64) {
             buffer.flip();
-            ClientPacketType clientPacketType = ClientPacketType.values()[buffer.getInt()];
+            PacketType clientPacketType = PacketType.values()[buffer.getInt()];
             Logger.getLogger(Proxy.class.getSimpleName()).log(Level.INFO, "Server received packet: " + clientPacketType);
 
-            List<Packet<ServerPacketType>> responses = new ArrayList<>();
+            List<Packet> responses = new ArrayList<>();
 
             for (PacketHandle handle : handles.get(clientPacketType)) {
                 handle.handle(buffer.duplicate()).ifPresent(responses::add);
             }
 
-            for (Packet<ServerPacketType> response : responses) {
+            for (Packet response : responses) {
                 ByteBuffer dbuf = ByteBuffer.allocate(64);
                 dbuf.putInt(response.getType().ordinal());
                 response.toBytes(dbuf);
@@ -136,7 +135,7 @@ public class Proxy {
         }
     }
 
-    public void send(String playerId, Packet<ServerPacketType> packet) {
+    public void send(String playerId, Packet packet) {
         ByteBuffer buffer = ByteBuffer.allocate(64);
         buffer.putInt(packet.getType().ordinal());
         packet.toBytes(buffer);
@@ -148,7 +147,7 @@ public class Proxy {
         }
     }
 
-    public void broadcast(Packet<ServerPacketType> packet) {
+    public void broadcast(Packet packet) {
         ByteBuffer buffer = ByteBuffer.allocate(64);
         buffer.putInt(packet.getType().ordinal());
         packet.toBytes(buffer);

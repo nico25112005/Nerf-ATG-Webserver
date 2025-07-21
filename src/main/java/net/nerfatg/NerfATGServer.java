@@ -1,35 +1,24 @@
 package net.nerfatg;
 
+import jline.console.ConsoleReader;
+import net.nerfatg.command.CommandHandler;
+import net.nerfatg.command.CommandScanner;
+import net.nerfatg.command.commands.BroadcastCommand;
+import net.nerfatg.command.commands.VersionCommand;
 import net.nerfatg.game.GameHandler;
-import net.nerfatg.proxy.PacketHandle;
 import net.nerfatg.proxy.Proxy;
-import net.nerfatg.proxy.packet.Packet;
-import net.nerfatg.proxy.packet.client.BlasterConnected;
-import net.nerfatg.proxy.packet.client.ClientPacketType;
-import net.nerfatg.proxy.packet.server.PlayerInfo;
-import net.nerfatg.proxy.packet.server.ServerPacketType;
+import net.nerfatg.proxy.packet.PacketType;
+import net.nerfatg.task.Task;
+import net.nerfatg.task.TaskScheduler;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.logging.LogManager;
-import java.util.logging.Logger;
 
 public class NerfATGServer {
-
-    /*
-        create table players (
-            id BIGINT NOT NULL auto_increment,
-            name VARCHAR(20),
-            longitude DOUBLE,
-            latitude DOUBLE,
-        PRIMARY KEY (id)
-    );
-     */
 
     public static void loadLoggerConfiguration() {
         InputStream stream = NerfATGServer.class.getClassLoader().
@@ -42,7 +31,11 @@ public class NerfATGServer {
     }
 
     private final Properties properties;
-    private final SessionFactory factory;
+
+    private final TaskScheduler taskScheduler;
+    private final CommandHandler commandHandler;
+
+    private final ConsoleReader consoleReader;
 
     private final Proxy proxy;
     private final GameHandler gameHandler;
@@ -51,29 +44,37 @@ public class NerfATGServer {
         this.properties = new Properties();
         this.properties.load(getClass().getClassLoader().getResourceAsStream("server.properties"));
 
-        try {
-            factory = new Configuration()
-                .addResource("Player.hbm.xml").configure().buildSessionFactory();
-        } catch (Exception e) {
-            throw new IOException(e.getMessage());
-        }
-
-        this.proxy = new Proxy(25565);
+        this.proxy = new Proxy(36676);
         this.gameHandler = new GameHandler();
 
-        this.proxy.registerHandle(ClientPacketType.CreateGame, this.gameHandler);
-        this.proxy.registerHandle(ClientPacketType.BlasterConnected, new PacketHandle() {
-            @Override
-            public Optional<Packet<ServerPacketType>> handle(ByteBuffer buffer) {
-                BlasterConnected blasterConnected = new BlasterConnected(buffer);
+        this.proxy.registerHandle(PacketType.CreateGame, this.gameHandler);
 
-                Logger.getLogger(getClass().getSimpleName()).info(blasterConnected.toString());
+        this.taskScheduler = new TaskScheduler();
+        this.commandHandler = new CommandHandler(this.taskScheduler,
+                ' ');
 
-                PlayerInfo info = new PlayerInfo(blasterConnected.getPlayerId(), "Nico", 0);
+        this.consoleReader = new ConsoleReader(System.in, System.out);
+        this.consoleReader.addCompleter(this.commandHandler);
+        this.consoleReader.setPrompt(">" + " ");
 
-                return Optional.of(info);
+        Task task = new Task("command-handler", this::startCommandHandler);
+        this.taskScheduler.runRepeatingTask(task);
+
+
+        this.commandHandler.registerCommand(new VersionCommand("version"));
+        this.commandHandler.registerCommand(new BroadcastCommand("broadcast", this));
+    }
+
+    private void startCommandHandler() {
+        CommandScanner commandScanner = () -> {
+            try {
+                return this.consoleReader.readLine();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
-        });
+        };
+
+        this.commandHandler.scanLoop(commandScanner);
     }
 
     private void launch(String[] args) {
@@ -82,6 +83,10 @@ public class NerfATGServer {
 
     public Properties getProperties() {
         return properties;
+    }
+
+    public Proxy getProxy() {
+        return proxy;
     }
 
     public static void main(String[] args) {
