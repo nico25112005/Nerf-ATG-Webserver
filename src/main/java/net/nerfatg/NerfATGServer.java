@@ -17,6 +17,20 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 import java.util.logging.LogManager;
+import net.nerfatg.command.commands.ListConnectionsCommand;
+import net.nerfatg.command.commands.SendActivateAbilityCommand;
+import net.nerfatg.command.commands.SendBaseLocationCommand;
+import net.nerfatg.command.commands.SendCreateGameCommand;
+import net.nerfatg.command.commands.SendGameInfoCommand;
+import net.nerfatg.command.commands.SendGameStartedCommand;
+import net.nerfatg.command.commands.SendJoinGameCommand;
+import net.nerfatg.command.commands.SendMapPointCommand;
+import net.nerfatg.command.commands.SendPlayerInfoCommand;
+import net.nerfatg.command.commands.SendPlayerReadyCommand;
+import net.nerfatg.command.commands.SendPlayerStatusCommand;
+import net.nerfatg.command.commands.SendReadyPlayerCountCommand;
+import net.nerfatg.command.commands.SendStartGameCommand;
+import net.nerfatg.command.commands.SendSwitchTeamCommand;
 
 public class NerfATGServer {
 
@@ -63,6 +77,20 @@ public class NerfATGServer {
 
         this.commandHandler.registerCommand(new VersionCommand("version"));
         this.commandHandler.registerCommand(new BroadcastCommand("broadcast", this));
+        this.commandHandler.registerCommand(new ListConnectionsCommand("listconnections"));
+        this.commandHandler.registerCommand(new SendActivateAbilityCommand("sendactivateability"));
+        this.commandHandler.registerCommand(new SendBaseLocationCommand("sendbaselocation"));
+        this.commandHandler.registerCommand(new SendCreateGameCommand("sendcreategame"));
+        this.commandHandler.registerCommand(new SendGameInfoCommand("sendgameinfo"));
+        this.commandHandler.registerCommand(new SendGameStartedCommand("sendgamestarted"));
+        this.commandHandler.registerCommand(new SendJoinGameCommand("sendjoingame"));
+        this.commandHandler.registerCommand(new SendMapPointCommand("sendmappoint"));
+        this.commandHandler.registerCommand(new SendPlayerInfoCommand("sendplayerinfo"));
+        this.commandHandler.registerCommand(new SendPlayerReadyCommand("sendplayerready"));
+        this.commandHandler.registerCommand(new SendPlayerStatusCommand("sendplayerstatus"));
+        this.commandHandler.registerCommand(new SendReadyPlayerCountCommand("sendreadyplayercount"));
+        this.commandHandler.registerCommand(new SendStartGameCommand("sendstartgame"));
+        this.commandHandler.registerCommand(new SendSwitchTeamCommand("sendswitchteam"));
     }
 
     private void startCommandHandler() {

@@ -18,6 +18,7 @@ public class Proxy {
 
     private static final Set<SocketChannel> connectedClients = Collections.synchronizedSet(new HashSet<>());
     private static final HashMap<String, SocketChannel> playerClients = new HashMap<>();
+    private static Proxy instance;
 
     private final int port;
 
@@ -31,6 +32,7 @@ public class Proxy {
         }
 
         this.port = port;
+        instance = this;
     }
 
     public void registerHandle(PacketType type, PacketHandle handle) {
@@ -165,5 +167,17 @@ public class Proxy {
 
     public void shutdown() {
         running = false;
+    }
+
+    public static Set<SocketChannel> getConnectedClients() {
+        return connectedClients;
+    }
+
+    public static Map<String, SocketChannel> getPlayerClients() {
+        return playerClients;
+    }
+
+    public static Proxy getInstance() {
+        return instance;
     }
 }

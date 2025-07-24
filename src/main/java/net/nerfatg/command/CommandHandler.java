@@ -63,6 +63,7 @@ public class CommandHandler implements Completer {
      * @param command The command you want to register.
      */
     public synchronized void registerCommand(Command command) {
+        if (logger != null) logger.fine("Registering command: " + command.getLabel());
         command.setLogger(this.logger);
         commandMap.put(command.getLabel(), command);
     }
@@ -89,6 +90,7 @@ public class CommandHandler implements Completer {
      * @param line The line of text that was sent to the bot.
      */
     public synchronized void executeCommand(String line) {
+        if (logger != null) logger.fine("Executing command line: " + line);
         if (commandChar != ' ') line = line.substring(1);
         String[] cmdSplit = line.split(" ", 2);
         if (cmdSplit.length < 2) executeCommand(cmdSplit[0], new String[]{});
@@ -102,6 +104,7 @@ public class CommandHandler implements Completer {
      * @param args The arguments of the command.
      */
     public void executeCommand(String cmd, String[] args) {
+        if (logger != null) logger.fine("Executing command: " + cmd + " with args: " + Arrays.toString(args));
         commandMap.get(cmd).execute(new CommandContext(cmd, args, properties));
     }
 

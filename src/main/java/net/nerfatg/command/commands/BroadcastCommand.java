@@ -24,19 +24,19 @@ public class BroadcastCommand extends Command {
     }
 
     private void nativeAction(CommandContext ctx) {
+        if (getCommandLogger() != null) getCommandLogger().info("Broadcast command started");
         System.out.println("Broadcast command started");
     }
     
     private void broadcastMessage(CommandContext ctx) {
         String message = ctx.args()[0];
-
+        if (getCommandLogger() != null) getCommandLogger().info("Broadcasting message: " + message);
         GameStarted packet = new GameStarted("AAAAAAAA",
                 "BBBBBBBB", "Gotzi", (byte) 0, (byte) 5, PacketAction.Generic);
-
         server.getProxy().broadcast(
                 packet
         );
-
+        if (getCommandLogger() != null) getCommandLogger().info("Broadcasting finished! " + message);
         System.out.println("Broadcasting finished! " + message);
     }
 }

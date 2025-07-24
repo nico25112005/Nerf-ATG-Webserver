@@ -24,18 +24,20 @@ public class VersionCommand extends Command {
         addArgument(
                 new CommandArgument("task1", 0, new CommandArgument[]{
                         new CommandArgument("subtask", 1, (ctx) -> {
-
+                            if (getCommandLogger() != null) getCommandLogger().info("VersionCommand: subtask executed");
                         }),
                         new CommandArgument("subitask", 1, (ctx) -> {
-
+                            if (getCommandLogger() != null) getCommandLogger().info("VersionCommand: subitask executed");
                         })
                 }, (ctx) -> {
+                    if (getCommandLogger() != null) getCommandLogger().info("VersionCommand: Called only task1");
                     System.out.println("Called only task1");
                 })
         );
     }
 
     private void nativeAction(CommandContext gCommandContext) {
+        if (getCommandLogger() != null) getCommandLogger().info("Version command started");
         System.out.println("Version command started");
     }
 }

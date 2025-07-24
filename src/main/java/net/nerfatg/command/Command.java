@@ -14,6 +14,7 @@ public class Command {
     private final String label;
     private CommandAction nativeAction;
     private Logger logger;
+    private String helpText;
 
     public Command(String label) {
         this.label = label;
@@ -32,7 +33,17 @@ public class Command {
      * @param gotziCommandContext The context of the command.
      */
     public void execute(CommandContext gotziCommandContext) {
+        if (gotziCommandContext.args().length > 0 && "-help".equalsIgnoreCase(gotziCommandContext.args()[0])) {
+            if (helpText != null) {
+                System.out.println(helpText);
+            } else {
+                System.out.println("No help available for this command.");
+            }
+            return;
+        }
+        if (logger != null) logger.fine("Executing command: " + label + " with args: " + Arrays.toString(gotziCommandContext.args()));
         if (gotziCommandContext.args().length == 0 && nativeAction != null) {
+            if (logger != null) logger.fine("No arguments, running native action for command: " + label);
             nativeAction.run(gotziCommandContext);
             return;
         }
@@ -42,20 +53,24 @@ public class Command {
                         .findFirst().orElse(null);
 
         if (gArgument == null) {
+            if (logger != null) logger.warning("Command not found for input: " + Arrays.toString(gotziCommandContext.args()));
             System.out.println("Command not found");
             return;
         } else if (gotziCommandContext.args().length == 1) {
+            if (logger != null) logger.fine("Running command action for argument: " + gArgument.getLabel());
             gArgument.getCommandAction().run(gotziCommandContext);
         }
 
         for (int i = 0; i < gotziCommandContext.args().length-1; i++) {
             gArgument = getNextArgument(gArgument, gotziCommandContext);
             if (gArgument == null) {
+                if (logger != null) logger.warning("Command not found in argument chain for input: " + Arrays.toString(gotziCommandContext.args()));
                 System.out.println("Command not found");
                 return;
             }
 
             if (gArgument.getIndex() == (gotziCommandContext.args().length-1) && gArgument.getCommandAction() != null) {
+                if (logger != null) logger.fine("Running command action for argument: " + gArgument.getLabel());
                 gArgument.getCommandAction().run(gotziCommandContext);
             }
         }
@@ -140,6 +155,10 @@ public class Command {
 
     public void setNativeAction(CommandAction nativeAction) {
         this.nativeAction = nativeAction;
+    }
+
+    public void setHelpText(String helpText) {
+        this.helpText = helpText;
     }
 
     public Logger getCommandLogger() {
