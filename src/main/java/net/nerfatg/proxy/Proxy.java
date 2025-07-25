@@ -13,6 +13,8 @@ import java.nio.channels.SocketChannel;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class Proxy {
 
@@ -92,6 +94,7 @@ public class Proxy {
         // Registriere den neuen ClientChannel beim Selector für Leseoperationen
         clientChannel.register(selector, SelectionKey.OP_READ, ByteBuffer.allocate(64));
         connectedClients.add(clientChannel);
+        playerClients.put(clientChannel.getRemoteAddress().toString(), clientChannel);
         Logger.getLogger(getClass().getSimpleName()).log(Level.INFO, "Client connected: " + clientChannel.getRemoteAddress());
     }
 
@@ -149,12 +152,15 @@ public class Proxy {
 
     public void broadcast(Packet packet) {
         ByteBuffer buffer = ByteBuffer.allocate(64);
-        buffer.putInt(packet.getType().ordinal());
         packet.toBytes(buffer);
 
         try {
             for (SocketChannel client : connectedClients) {
                 Logger.getLogger(Proxy.class.getSimpleName()).log(Level.INFO, "Packet sent to client " + client.getRemoteAddress());
+                Logger.getLogger(Proxy.class.getSimpleName()).log(Level.INFO, IntStream.range(0, buffer.limit())
+                        .mapToObj(i -> Byte.toString(buffer.get(i)))
+                        .collect(Collectors.joining("")));
+
 
                 client.write(buffer.duplicate());
             }
@@ -165,5 +171,9 @@ public class Proxy {
 
     public void shutdown() {
         running = false;
+    }
+
+    public HashMap<String, SocketChannel> getPlayerClients(){
+        return playerClients;
     }
 }

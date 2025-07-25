@@ -36,24 +36,25 @@ public class ProxyTest {
         }
     }
 
-
+    @Test
     public void receiveTest() throws InterruptedException {
         loadLoggerConfiguration();
 
-        Proxy proxy = new Proxy(25565);
+        /*
+        Proxy proxy = new Proxy(25115);
         proxy.registerHandle(PacketType.CreateGame, new Handler());
 
         new Thread(proxy::launch).start();
 
         Thread.sleep(5000);
-
+        */
         final int clientCount = 10;
 
         AtomicInteger counter = new AtomicInteger(0);
 
         for (int i = 0; i < clientCount; i++) {
             new Thread(() -> {
-                try (Socket socket = new Socket("localhost", 25565)) {
+                try (Socket socket = new Socket("localhost", 25115)) {
                     Logger.getLogger("Client").info("Connected to server");
 
                     CreateGame packet = new CreateGame("A90DA31AD316", GameType.Team, "Testgame", (byte)0, PacketAction.Generic);
@@ -64,7 +65,7 @@ public class ProxyTest {
 
                     socket.getOutputStream().write(buffer.array());
 
-                    Thread.sleep(500);
+                    Thread.sleep(180000);
                     counter.incrementAndGet();
                 } catch (IOException | InterruptedException e) {
                     Logger.getLogger("Client").warning(e.getMessage());

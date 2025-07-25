@@ -5,6 +5,9 @@ import net.nerfatg.command.CommandHandler;
 import net.nerfatg.command.CommandScanner;
 import net.nerfatg.command.commands.BroadcastCommand;
 import net.nerfatg.command.commands.VersionCommand;
+import net.nerfatg.command.commands.ConnectionsCommand;
+import net.nerfatg.command.commands.SendPlayerInfoCommand;
+import net.nerfatg.command.commands.SendGameInfoCommand;
 import net.nerfatg.game.GameHandler;
 import net.nerfatg.proxy.Proxy;
 import net.nerfatg.proxy.packet.PacketType;
@@ -44,7 +47,7 @@ public class NerfATGServer {
         this.properties = new Properties();
         this.properties.load(getClass().getClassLoader().getResourceAsStream("server.properties"));
 
-        this.proxy = new Proxy(36676);
+        this.proxy = new Proxy(25115);
         this.gameHandler = new GameHandler();
 
         this.proxy.registerHandle(PacketType.CreateGame, this.gameHandler);
@@ -63,6 +66,9 @@ public class NerfATGServer {
 
         this.commandHandler.registerCommand(new VersionCommand("version"));
         this.commandHandler.registerCommand(new BroadcastCommand("broadcast", this));
+        this.commandHandler.registerCommand(new ConnectionsCommand("connections", proxy.getPlayerClients()));
+        this.commandHandler.registerCommand(new SendPlayerInfoCommand("sendplayerinfo", proxy));
+        this.commandHandler.registerCommand(new SendGameInfoCommand("sendgameinfo", proxy));
     }
 
     private void startCommandHandler() {
