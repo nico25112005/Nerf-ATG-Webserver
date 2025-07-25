@@ -6,13 +6,14 @@
 package net.nerfatg.command;
 
 import jline.console.completer.Completer;
+import net.nerfatg.logging.LoggerFactory;
+import net.nerfatg.logging.NerfLogger;
 import net.nerfatg.task.AsyncTaskScheduler;
 import net.nerfatg.task.Task;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
-import java.util.logging.Logger;
 
 public class CommandHandler implements Completer {
 
@@ -20,19 +21,25 @@ public class CommandHandler implements Completer {
     private final Map<String, Command> commandMap = new LinkedHashMap<>();
     private final char commandChar;
     private final AsyncTaskScheduler<Task> taskScheduler;
-    private Logger logger;
+    private NerfLogger logger;
 
     public CommandHandler(AsyncTaskScheduler<Task> taskScheduler, char commandChar) {
         this.commandChar = commandChar;
         this.taskScheduler = taskScheduler;
+        this.logger = LoggerFactory.getLogger("CommandHandler");
 
         InputStream in = CommandHandler.class.getClassLoader().getResourceAsStream("command-handler.properties");
 
         try {
             properties.load(in);
+            logger.info("Command handler properties loaded successfully");
         } catch (IOException e) {
-            throw new ExceptionInInitializerError();
+            logger.error("Failed to load command-handler.properties: " + e.getMessage());
+            throw new ExceptionInInitializerError(e);
         }
+        
+        logger.info("CommandHandler initialized with command character: '" + commandChar + "'");
+        logger.info("Registered commands will be: " + commandMap.keySet());
     }
 
     public void scanLoop(CommandScanner commandScanner) {
@@ -40,15 +47,15 @@ public class CommandHandler implements Completer {
 
         try {
             scan = commandScanner.scan();
-            if (scan != null && scan.length() != 0) {
+            if (scan != null && !scan.isEmpty()) {
                 scan = scan.trim();
 
-                if (isCommand(scan))
+                if (isCommand(scan)) {
                     startCommandExecuteTask(scan);
+                }
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            //throw new CommandException(e.getMessage());
+            logger.error("Error in command scan loop: " + e.getMessage());
         }
     }
 
@@ -74,7 +81,8 @@ public class CommandHandler implements Completer {
             String[] cmdSplit = line.split(" ", 2);
 
             if (!commandMap.containsKey(cmdSplit[0])) {
-                // this.logger.log(LogLevel.INFO, properties.getProperty("commandNotExists"), cmdSplit[0]);
+                logger.warning("Command not found: " + cmdSplit[0]);
+                logger.info("Available commands: " + String.join(", ", commandMap.keySet()));
                 return false;
             }
 
@@ -104,62 +112,101 @@ public class CommandHandler implements Completer {
      * @param args The arguments of the command.
      */
     public void executeCommand(String cmd, String[] args) {
-        if (logger != null) logger.fine("Executing command: " + cmd + " with args: " + Arrays.toString(args));
-        commandMap.get(cmd).execute(new CommandContext(cmd, args, properties));
+        logger.fine("Executing command: " + cmd + " with args: " + Arrays.toString(args));
+        
+        try {
+            Command command = commandMap.get(cmd);
+            if (command != null) {
+                command.execute(new CommandContext(cmd, args, properties));
+            }
+        } catch (Exception e) {
+            logger.error("Error executing command '" + cmd + "': " + e.getMessage());
+        }
     }
 
     public Properties getProperties() {
         return properties;
     }
 
-    public void setLogger(Logger logger) {
+    public void setLogger(NerfLogger logger) {
         this.logger = logger;
     }
 
     @Override
     public int complete(String buffer, int cursor, List<CharSequence> candidates) {
+        // Force output to original System.out to ensure we see debug messages
+        System.out.println("\n[DEBUG] Completion called! Buffer: '" + buffer + "', cursor: " + cursor);
+        logger.error("COMPLETION METHOD CALLED - buffer: '" + buffer + "', cursor: " + cursor);
+        
         final SortedSet<String> commands = new TreeSet<>(commandMap.keySet());
-        String prefix;
-
-        if (buffer == null) {
+        System.out.println("[DEBUG] Available commands: " + commands);
+        
+        // Handle empty buffer
+        if (buffer == null || buffer.isEmpty()) {
+            System.out.println("[DEBUG] Empty buffer, adding all commands");
             candidates.addAll(commands);
-        } else if (buffer.charAt(0) == commandChar || commandChar == ' ') {
-            prefix = buffer;
-
-            if (buffer.length() > cursor) {
-                prefix = buffer.substring(0, cursor).trim();
-            }
-
-            if (commandChar != ' ') prefix = prefix.substring(1);
-
-            String[] prefixSplit = prefix.split(" ", 2);
-
-            if (prefixSplit.length == 1) {
-                for (String match : commands.tailSet(prefix)) {
-
-                    if (!match.startsWith(prefix)) {
-                        break;
-                    }
-
-                    candidates.add(match);
+            System.out.println("[DEBUG] Added " + candidates.size() + " candidates");
+            return 0;
+        }
+        
+        // Get the text up to the cursor position
+        String textToCursor = buffer.length() > cursor ? buffer.substring(0, cursor) : buffer;
+        System.out.println("[DEBUG] Text to cursor: '" + textToCursor + "'");
+        
+        // Since commandChar is ' ' (space), we don't need to check for command prefix
+        // Just work with the buffer directly
+        String[] parts = textToCursor.split(" ");
+        System.out.println("[DEBUG] Split parts: " + Arrays.toString(parts));
+        
+        if (parts.length == 0) {
+            // Empty input, show all commands
+            candidates.addAll(commands);
+            System.out.println("[DEBUG] Empty parts, added " + candidates.size() + " candidates");
+            return 0;
+        } else if (parts.length == 1) {
+            // Completing command name
+            String commandPrefix = parts[0];
+            System.out.println("[DEBUG] Completing command with prefix: '" + commandPrefix + "'");
+            
+            for (String command : commands) {
+                if (command.startsWith(commandPrefix)) {
+                    candidates.add(command);
+                    System.out.println("[DEBUG] Added command candidate: " + command);
                 }
+            }
+            
+            System.out.println("[DEBUG] Final candidates: " + candidates);
+            // Return the start position for replacement
+            return textToCursor.lastIndexOf(commandPrefix);
+        } else {
+            // Completing command arguments
+            String commandName = parts[0];
+            System.out.println("[DEBUG] Completing arguments for command: " + commandName);
+            
+            Command command = commandMap.get(commandName);
+            if (command == null) {
+                System.out.println("[DEBUG] Command not found: " + commandName);
+                return -1;
+            }
+            
+            // Get the argument parts (excluding the command name)
+            String[] argParts = Arrays.copyOfRange(parts, 1, parts.length);
+            String currentArg = argParts.length > 0 ? argParts[argParts.length - 1] : "";
+            String[] prefixArgs = argParts.length > 1 ? Arrays.copyOfRange(argParts, 0, argParts.length - 1) : new String[0];
+            
+            System.out.println("[DEBUG] Prefix args: " + Arrays.toString(prefixArgs) + ", current arg: '" + currentArg + "'");
+            
+            List<CharSequence> argCandidates = command.completeArgument(prefixArgs, currentArg);
+            System.out.println("[DEBUG] Got " + argCandidates.size() + " argument candidates: " + argCandidates);
+            
+            candidates.addAll(argCandidates);
+            
+            // Return the start position of the current argument
+            if (!currentArg.isEmpty()) {
+                return textToCursor.lastIndexOf(currentArg);
             } else {
-                if (!commandMap.containsKey(prefixSplit[0])) {
-                    candidates.clear();
-                } else {
-                    String[] argSplit = prefixSplit[1].split(" ");
-                    String[] prefixArgs = Arrays.copyOfRange(argSplit, 0, argSplit.length-1);
-                    Command command = commandMap.get(prefixSplit[0]);
-                    List<CharSequence> argCandidates = command.completeArgument(prefixArgs, argSplit[argSplit.length-1]);
-                    argCandidates.forEach(charSequence -> candidates.add(prefixSplit[0] + " " + charSequence));
-                }
+                return textToCursor.length();
             }
         }
-
-        if (candidates.size() == 1) {
-            candidates.set(0, String.valueOf((commandChar == ' ' ? "" : commandChar)) + candidates.get(0));
-        }
-
-        return candidates.isEmpty() ? -1 : 0;
     }
 }

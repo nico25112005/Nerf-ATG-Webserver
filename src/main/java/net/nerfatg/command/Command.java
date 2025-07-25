@@ -5,23 +5,39 @@
 
 package net.nerfatg.command;
 
+import net.nerfatg.logging.LoggerFactory;
+import net.nerfatg.logging.NerfLogger;
+
 import java.util.*;
-import java.util.logging.Logger;
 
 public class Command {
 
     private final SortedSet<CommandArgument> arguments = new TreeSet<>();
     private final String label;
+    private final String description;
     private CommandAction nativeAction;
-    private Logger logger;
+    private NerfLogger logger;
     private String helpText;
 
     public Command(String label) {
         this.label = label;
+        this.description = null;
+    }
+
+    public Command(String label, String description) {
+        this.label = label;
+        this.description = description;
     }
 
     public Command(String label, CommandAction nativeAction) {
         this.label = label;
+        this.description = null;
+        this.nativeAction = nativeAction;
+    }
+
+    public Command(String label, String description, CommandAction nativeAction) {
+        this.label = label;
+        this.description = description;
         this.nativeAction = nativeAction;
     }
 
@@ -30,48 +46,51 @@ public class Command {
      * valid. If it is, check if the next argument is valid. If it is, check if the next argument is valid. If it is, run
      * the command action
      *
-     * @param gotziCommandContext The context of the command.
+     * @param commandContext The context of the command.
      */
-    public void execute(CommandContext gotziCommandContext) {
-        if (gotziCommandContext.args().length > 0 && "-help".equalsIgnoreCase(gotziCommandContext.args()[0])) {
+    public void execute(CommandContext commandContext) {
+        ensureLogger(); // Ensure logger is available
+        
+        if (commandContext.args().length > 0 && "-help".equalsIgnoreCase(commandContext.args()[0])) {
             if (helpText != null) {
                 System.out.println(helpText);
             } else {
-                System.out.println("No help available for this command.");
+                System.out.println(generateHelpText());
             }
             return;
         }
-        if (logger != null) logger.fine("Executing command: " + label + " with args: " + Arrays.toString(gotziCommandContext.args()));
-        if (gotziCommandContext.args().length == 0 && nativeAction != null) {
-            if (logger != null) logger.fine("No arguments, running native action for command: " + label);
-            nativeAction.run(gotziCommandContext);
+        
+        logger.fine("Executing command: " + label + " with args: " + Arrays.toString(commandContext.args()));
+        if (commandContext.args().length == 0 && nativeAction != null) {
+            logger.fine("No arguments, running native action for command: " + label);
+            nativeAction.run(commandContext);
             return;
         }
 
-        CommandArgument gArgument =
-                arguments.stream().filter(arg -> filterGotziArguments(arg, gotziCommandContext))
+        CommandArgument argument =
+                arguments.stream().filter(arg -> filterArguments(arg, commandContext))
                         .findFirst().orElse(null);
 
-        if (gArgument == null) {
-            if (logger != null) logger.warning("Command not found for input: " + Arrays.toString(gotziCommandContext.args()));
-            System.out.println("Command not found");
+        if (argument == null) {
+            if (logger != null) logger.warning("Command not found for input: " + Arrays.toString(commandContext.args()));
+            printSyntaxError(commandContext, 0);
             return;
-        } else if (gotziCommandContext.args().length == 1) {
-            if (logger != null) logger.fine("Running command action for argument: " + gArgument.getLabel());
-            gArgument.getCommandAction().run(gotziCommandContext);
+        } else if (commandContext.args().length == 1) {
+            if (logger != null) logger.fine("Running command action for argument: " + argument.getLabel());
+            argument.getCommandAction().run(commandContext);
         }
 
-        for (int i = 0; i < gotziCommandContext.args().length-1; i++) {
-            gArgument = getNextArgument(gArgument, gotziCommandContext);
-            if (gArgument == null) {
-                if (logger != null) logger.warning("Command not found in argument chain for input: " + Arrays.toString(gotziCommandContext.args()));
-                System.out.println("Command not found");
+        for (int i = 0; i < commandContext.args().length-1; i++) {
+            argument = getNextArgument(argument, commandContext);
+            if (argument == null) {
+                if (logger != null) logger.warning("Command not found in argument chain for input: " + Arrays.toString(commandContext.args()));
+                printSyntaxError(commandContext, i + 1);
                 return;
             }
 
-            if (gArgument.getIndex() == (gotziCommandContext.args().length-1) && gArgument.getCommandAction() != null) {
-                if (logger != null) logger.fine("Running command action for argument: " + gArgument.getLabel());
-                gArgument.getCommandAction().run(gotziCommandContext);
+            if (argument.getIndex() == (commandContext.args().length-1) && argument.getCommandAction() != null) {
+                if (logger != null) logger.fine("Running command action for argument: " + argument.getLabel());
+                argument.getCommandAction().run(commandContext);
             }
         }
     }
@@ -116,7 +135,7 @@ public class Command {
     private CommandArgument getNextArgument(CommandArgument gArgument, CommandContext gotziCommandContext) {
         if (gArgument.getSubCommands() == null) return null;
         return gArgument.getSubCommands().stream().filter(arg ->
-                filterGotziArguments(arg, gotziCommandContext)
+                filterArguments(arg, gotziCommandContext)
         ).findFirst().orElse(null);
     }
 
@@ -131,22 +150,26 @@ public class Command {
      * @param gotziCommandContext The context of the command.
      * @return A boolean value.
      */
-    private boolean filterGotziArguments(CommandArgument gArgument, CommandContext gotziCommandContext) {
+    private boolean filterArguments(CommandArgument gArgument, CommandContext gotziCommandContext) {
         return gArgument.getIndex() < gotziCommandContext.args().length && (gArgument.getLabel().equals(gotziCommandContext.args()[gArgument.getIndex()]) || gArgument instanceof CommandArgumentValue);
     }
 
     /**
      * If the argument doesn't already exist, add it to the list
      *
-     * @param gArgument The argument to add to the list of arguments.
+     * @param argument The argument to add to the list of arguments.
      */
-    public void addArgument(CommandArgument gArgument) {
-        if (arguments.stream().noneMatch(argument -> argument.getLabel().equals(gArgument.getLabel())))
-            arguments.add(gArgument);
+    public void addArgument(CommandArgument argument) {
+        if (arguments.stream().noneMatch(subArgument -> subArgument.getLabel().equals(subArgument.getLabel())))
+            arguments.add(argument);
     }
 
     public String getLabel() {
         return label;
+    }
+
+    public String getDescription() {
+        return description;
     }
 
     public SortedSet<CommandArgument> getArguments() {
@@ -161,11 +184,221 @@ public class Command {
         this.helpText = helpText;
     }
 
-    public Logger getCommandLogger() {
+    public NerfLogger getCommandLogger() {
         return this.logger;
     }
 
-    protected void setLogger(Logger logger) {
+    protected void setLogger(NerfLogger logger) {
         this.logger = logger;
+    }
+
+    /**
+     * Automatically creates and sets a logger for this command if none exists
+     */
+    private void ensureLogger() {
+        if (this.logger == null) {
+            this.logger = LoggerFactory.getLogger("Command-" + label);
+        }
+    }
+
+    /**
+     * Generates automatic help text based on command description and arguments
+     *
+     * @return Generated help text string
+     */
+    private String generateHelpText() {
+        StringBuilder helpBuilder = new StringBuilder();
+        
+        // Command header
+        helpBuilder.append("Command: ").append(label).append("\n");
+        
+        // Command description
+        if (description != null && !description.trim().isEmpty()) {
+            helpBuilder.append("Description: ").append(description).append("\n");
+        }
+        
+        // Usage section
+        helpBuilder.append("\nUsage:\n");
+        helpBuilder.append("  ").append(label);
+        
+        if (nativeAction != null) {
+            helpBuilder.append(" (no arguments)\n");
+        }
+        
+        if (!arguments.isEmpty()) {
+            helpBuilder.append("\n\nArguments:\n");
+            generateArgumentHelp(arguments, helpBuilder, "  ");
+        }
+        
+        helpBuilder.append("\nUse '").append(label).append(" -help' to show this help message.");
+        
+        return helpBuilder.toString();
+    }
+
+    /**
+     * Recursively generates help text for command arguments
+     *
+     * @param args The set of arguments to generate help for
+     * @param helpBuilder The StringBuilder to append help text to
+     * @param indent The current indentation level
+     */
+    private void generateArgumentHelp(SortedSet<CommandArgument> args, StringBuilder helpBuilder, String indent) {
+        for (CommandArgument arg : args) {
+            if (arg instanceof CommandArgumentValue) {
+                helpBuilder.append(indent).append("<value>");
+                if (arg.getDescription() != null && !arg.getDescription().trim().isEmpty()) {
+                    helpBuilder.append(" - ").append(arg.getDescription());
+                }
+                helpBuilder.append("\n");
+            } else {
+                helpBuilder.append(indent).append(arg.getLabel());
+                if (arg.getDescription() != null && !arg.getDescription().trim().isEmpty()) {
+                    helpBuilder.append(" - ").append(arg.getDescription());
+                }
+                helpBuilder.append("\n");
+            }
+            
+            // Recursively add sub-arguments
+            if (arg.getSubCommands() != null && !arg.getSubCommands().isEmpty()) {
+                generateArgumentHelp(arg.getSubCommands(), helpBuilder, indent + "  ");
+            }
+        }
+    }
+
+    /**
+     * Prints detailed syntax error information with suggestions
+     *
+     * @param commandContext The command context that caused the error
+     * @param errorIndex The index where the error occurred
+     */
+    private void printSyntaxError(CommandContext commandContext, int errorIndex) {
+        System.out.println("❌ Syntax Error: Invalid command syntax");
+        System.out.println();
+        
+        // Show what was entered
+        System.out.print("You entered: " + label);
+        for (int i = 0; i < commandContext.args().length; i++) {
+            if (i == errorIndex) {
+                System.out.print(" [❌" + commandContext.args()[i] + "]");
+            } else {
+                System.out.print(" " + commandContext.args()[i]);
+            }
+        }
+        System.out.println();
+        System.out.println();
+        
+        // Show available options at the error point
+        SortedSet<CommandArgument> availableArgs = getAvailableArgumentsAtIndex(commandContext, errorIndex);
+        
+        if (!availableArgs.isEmpty()) {
+            System.out.println("💡 Available options at this position:");
+            for (CommandArgument arg : availableArgs) {
+                if (arg instanceof CommandArgumentValue) {
+                    System.out.print("   <value>");
+                    if (arg.getDescription() != null && !arg.getDescription().trim().isEmpty()) {
+                        System.out.print(" - " + arg.getDescription());
+                    }
+                } else {
+                    System.out.print("   " + arg.getLabel());
+                    if (arg.getDescription() != null && !arg.getDescription().trim().isEmpty()) {
+                        System.out.print(" - " + arg.getDescription());
+                    }
+                }
+                System.out.println();
+            }
+            System.out.println();
+        }
+        
+        // Show usage examples
+        System.out.println("📖 Usage examples:");
+        generateUsageExamples();
+        
+        System.out.println();
+        System.out.println("💬 For detailed help, use: " + label + " -help");
+    }
+
+    /**
+     * Gets available arguments at a specific error index
+     *
+     * @param commandContext The command context
+     * @param errorIndex The index where the error occurred
+     * @return Set of available arguments at that position
+     */
+    private SortedSet<CommandArgument> getAvailableArgumentsAtIndex(CommandContext commandContext, int errorIndex) {
+        if (errorIndex == 0) {
+            return arguments;
+        }
+        
+        // Navigate to the correct argument level
+        SortedSet<CommandArgument> currentArgs = arguments;
+        CommandArgument currentArg = null;
+        
+        for (int i = 0; i < errorIndex && i < commandContext.args().length; i++) {
+            int argIndex = i;
+            currentArg = currentArgs.stream()
+                    .filter(arg -> arg.getLabel().equals(commandContext.args()[argIndex]) || arg instanceof CommandArgumentValue)
+                    .findFirst()
+                    .orElse(null);
+            
+            if (currentArg == null) break;
+            
+            if (currentArg.getSubCommands() != null) {
+                currentArgs = currentArg.getSubCommands();
+            } else {
+                currentArgs = new TreeSet<>();
+                break;
+            }
+        }
+        
+        return currentArgs;
+    }
+
+    /**
+     * Generates and prints usage examples for the command
+     */
+    private void generateUsageExamples() {
+        // Show basic usage
+        if (nativeAction != null) {
+            System.out.println("   " + label + " (no arguments)");
+        }
+        
+        // Show argument-based examples
+        if (!arguments.isEmpty()) {
+            generateExampleUsage(arguments, label, 0, 3); // Limit to 3 examples
+        }
+    }
+
+    /**
+     * Recursively generates example usage patterns
+     *
+     * @param args Current argument set
+     * @param currentCommand Current command string being built
+     * @param depth Current recursion depth
+     * @param maxExamples Maximum number of examples to show
+     */
+    private void generateExampleUsage(SortedSet<CommandArgument> args, String currentCommand, int depth, int maxExamples) {
+        if (depth >= maxExamples) return;
+        
+        int exampleCount = 0;
+        for (CommandArgument arg : args) {
+            if (exampleCount >= maxExamples) break;
+            
+            String exampleCommand;
+            if (arg instanceof CommandArgumentValue) {
+                exampleCommand = currentCommand + " <value>";
+            } else {
+                exampleCommand = currentCommand + " " + arg.getLabel();
+            }
+            
+            if (arg.getCommandAction() != null) {
+                System.out.println("   " + exampleCommand);
+                exampleCount++;
+            }
+            
+            // Show one level of sub-commands for the first few arguments
+            if (arg.getSubCommands() != null && !arg.getSubCommands().isEmpty() && depth < 2) {
+                generateExampleUsage(arg.getSubCommands(), exampleCommand, depth + 1, maxExamples - exampleCount);
+            }
+        }
     }
 }
