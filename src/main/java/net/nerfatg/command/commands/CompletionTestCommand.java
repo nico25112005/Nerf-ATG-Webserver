@@ -29,15 +29,10 @@ public class CompletionTestCommand extends Command {
         addArgument(new CommandArgument("start", "Start something", 0, this::startAction));
         addArgument(new CommandArgument("stop", "Stop something", 0, this::stopAction));
         addArgument(new CommandArgument("status", "Show status", 0, this::statusAction));
-        addArgument(new CommandArgument("config", "Configuration options", 0, 
-            new CommandArgument[] {
+        addArgument(new CommandArgument("config", "Configuration options", 0, null,
                 new CommandArgument("set", "Set a configuration value", 1, this::configSetAction),
                 new CommandArgument("get", "Get a configuration value", 1, this::configGetAction),
-                new CommandArgument("list", "List all configuration values", 1, this::configListAction)
-            }, null));
-        
-        // Add a value argument for testing
-        addArgument(new CommandArgumentValue("Custom value for testing", 0, this::valueAction));
+                new CommandArgument("list", "List all configuration values", 1, this::configListAction)));
     }
 
     private void showCompletionInfo(CommandContext ctx) {
