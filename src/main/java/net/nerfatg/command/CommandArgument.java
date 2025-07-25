@@ -12,20 +12,32 @@ import java.util.TreeSet;
 public class CommandArgument implements Comparable<CommandArgument> {
     private SortedSet<CommandArgument> subArguments;
     private final String label;
+    private final String description;
     private final int index;
     private CommandAction commandAction;
 
-    public CommandArgument(String label, int index, CommandArgument[] subArguments, CommandAction commandAction) {
+    public CommandArgument(String label, String description, int index, CommandArgument[] subArguments, CommandAction commandAction) {
         this.label = label;
+        this.description = description;
         this.index = index;
         this.subArguments = new TreeSet<>(List.of(subArguments));
         this.commandAction = commandAction;
     }
 
-    public CommandArgument(String label, int index, CommandAction commandAction) {
+    public CommandArgument(String label, String description, int index, CommandAction commandAction) {
         this.label = label;
+        this.description = description;
         this.index = index;
         this.commandAction = commandAction;
+    }
+
+    // Backward compatibility constructors
+    public CommandArgument(String label, int index, CommandArgument[] subArguments, CommandAction commandAction) {
+        this(label, null, index, subArguments, commandAction);
+    }
+
+    public CommandArgument(String label, int index, CommandAction commandAction) {
+        this(label, null, index, commandAction);
     }
 
     public void setSubCommands(SortedSet<CommandArgument> subArguments) {
@@ -38,6 +50,10 @@ public class CommandArgument implements Comparable<CommandArgument> {
 
     public String getLabel() {
         return label;
+    }
+
+    public String getDescription() {
+        return description;
     }
 
     public int getIndex() {

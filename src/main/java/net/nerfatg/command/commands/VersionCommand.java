@@ -5,39 +5,28 @@
 
 package net.nerfatg.command.commands;
 
+import net.nerfatg.NerfATGServer;
 import net.nerfatg.command.Command;
-import net.nerfatg.command.CommandArgument;
-import net.nerfatg.command.CommandArgumentValue;
 import net.nerfatg.command.CommandContext;
+import net.nerfatg.logging.LoggerFactory;
+import net.nerfatg.logging.NerfLogger;
 
 public class VersionCommand extends Command {
 
-    public VersionCommand(String label) {
-        super(label);
+    private static final NerfLogger logger = LoggerFactory.getLogger("VersionCommand");
 
+    public VersionCommand(String label) {
+        super(label, "Display the current server version");
+        setLogger(logger); // Set the enhanced logger
         init();
     }
 
     public void init() {
         setNativeAction(this::nativeAction);
-
-        addArgument(
-                new CommandArgument("task1", 0, new CommandArgument[]{
-                        new CommandArgument("subtask", 1, (ctx) -> {
-                            if (getCommandLogger() != null) getCommandLogger().info("VersionCommand: subtask executed");
-                        }),
-                        new CommandArgument("subitask", 1, (ctx) -> {
-                            if (getCommandLogger() != null) getCommandLogger().info("VersionCommand: subitask executed");
-                        })
-                }, (ctx) -> {
-                    if (getCommandLogger() != null) getCommandLogger().info("VersionCommand: Called only task1");
-                    System.out.println("Called only task1");
-                })
-        );
     }
 
-    private void nativeAction(CommandContext gCommandContext) {
-        if (getCommandLogger() != null) getCommandLogger().info("Version command started");
-        System.out.println("Version command started");
+    private void nativeAction(CommandContext commandContext) {
+        logger.info("Version command executed");
+        logger.important("NerfATG Server Version: " + NerfATGServer.VERSION);
     }
 }

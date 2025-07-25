@@ -1,5 +1,7 @@
 package net.nerfatg.proxy;
 
+import net.nerfatg.logging.LoggerFactory;
+import net.nerfatg.logging.NerfLogger;
 import net.nerfatg.proxy.packet.Packet;
 import net.nerfatg.proxy.packet.PacketType;
 
@@ -11,8 +13,6 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class Proxy {
 
@@ -20,19 +20,28 @@ public class Proxy {
     private static final HashMap<String, SocketChannel> playerClients = new HashMap<>();
     private static Proxy instance;
 
+    private final NerfLogger logger;
+
     private final int port;
 
     private boolean running;
     private final HashMap<PacketType, List<PacketHandle>> handles;
 
-    public Proxy(int port) {
+    public Proxy(int port, NerfLogger logger) {
         this.handles = new HashMap<>();
         for (PacketType type : PacketType.values()) {
             this.handles.put(type, new ArrayList<>());
         }
 
+        this.logger = logger;
         this.port = port;
         instance = this;
+        
+        logger.debug("Proxy initialized on port " + port);
+    }
+
+    public Proxy(int port) {
+        this(port, LoggerFactory.getLogger("Proxy"));
     }
 
     public void registerHandle(PacketType type, PacketHandle handle) {
@@ -43,7 +52,7 @@ public class Proxy {
         handles.get(type).remove(handle);
     }
 
-    public void launch() {
+    public void launch(Runnable listening) {
         running = true;
 
         try (ServerSocketChannel serverSocketChannel = ServerSocketChannel.open()) {
@@ -57,14 +66,16 @@ public class Proxy {
             // Registriere den ServerSocketChannel für neue Verbindungen
             serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
 
-            Logger.getLogger(Proxy.class.getSimpleName()).log(Level.INFO, "Listening on port " + port);
+            logger.important("Proxy listening on port " + port);
+
+            listening.run();
 
             // Server-Schleife
             while (running) {
                 spin(serverSocketChannel, selector);
             }
         } catch (IOException e) {
-            Logger.getLogger(getClass().getSimpleName()).log(Level.SEVERE, e.getMessage());
+            logger.error("Failed to launch proxy: " + e.getMessage());
         }
     }
 
@@ -94,7 +105,7 @@ public class Proxy {
         // Registriere den neuen ClientChannel beim Selector für Leseoperationen
         clientChannel.register(selector, SelectionKey.OP_READ, ByteBuffer.allocate(64));
         connectedClients.add(clientChannel);
-        Logger.getLogger(getClass().getSimpleName()).log(Level.INFO, "Client connected: " + clientChannel.getRemoteAddress());
+        logger.info("Client connected: " + clientChannel.getRemoteAddress());
     }
 
     private void handleRead(SelectionKey key) throws IOException {
@@ -104,7 +115,7 @@ public class Proxy {
         int bytesRead = clientChannel.read(buffer);
         if (bytesRead == -1) {
             // Client hat die Verbindung geschlossen
-            Logger.getLogger(getClass().getSimpleName()).log(Level.INFO, "Client closed connection!: " + clientChannel.getRemoteAddress());
+            logger.info("Client closed connection: " + clientChannel.getRemoteAddress());
             connectedClients.remove(clientChannel);
             clientChannel.close();
             key.cancel();
@@ -114,7 +125,7 @@ public class Proxy {
         if (buffer.position() == 64) {
             buffer.flip();
             PacketType clientPacketType = PacketType.values()[buffer.getInt()];
-            Logger.getLogger(Proxy.class.getSimpleName()).log(Level.INFO, "Server received packet: " + clientPacketType);
+            logger.debug("Server received packet: " + clientPacketType);
 
             List<Packet> responses = new ArrayList<>();
 
@@ -128,7 +139,7 @@ public class Proxy {
                 response.toBytes(dbuf);
                 dbuf.position(0);
 
-                Logger.getLogger(getClass().getSimpleName()).log(Level.INFO, "Send Response: " + response);
+                logger.debug("Send Response: " + response);
 
                 clientChannel.write(dbuf);
             }
@@ -138,31 +149,45 @@ public class Proxy {
     }
 
     public void send(String playerId, Packet packet) {
+        logger.debug("Sending packet to player " + playerId + ": " + packet.getType());
         ByteBuffer buffer = ByteBuffer.allocate(64);
         buffer.putInt(packet.getType().ordinal());
         packet.toBytes(buffer);
 
         try {
-            playerClients.get(playerId).write(buffer);
+            SocketChannel playerChannel = playerClients.get(playerId);
+            if (playerChannel != null) {
+                playerChannel.write(buffer);
+                logger.fine("Packet sent successfully to player " + playerId);
+            } else {
+                logger.warning("Player " + playerId + " not found in connected clients");
+            }
         } catch (IOException e) {
-            Logger.getLogger(getClass().getSimpleName()).log(Level.SEVERE, e.getMessage());
+            logger.error("Failed to send packet to player " + playerId + ": " + e.getMessage());
         }
     }
 
     public void broadcast(Packet packet) {
+        logger.info("Broadcasting packet to " + connectedClients.size() + " clients: " + packet.getType());
         ByteBuffer buffer = ByteBuffer.allocate(64);
         buffer.putInt(packet.getType().ordinal());
         packet.toBytes(buffer);
 
-        try {
-            for (SocketChannel client : connectedClients) {
-                Logger.getLogger(Proxy.class.getSimpleName()).log(Level.INFO, "Packet sent to client " + client.getRemoteAddress());
+        int successCount = 0;
+        int failCount = 0;
 
+        for (SocketChannel client : connectedClients) {
+            try {
+                logger.debug("Sending packet to client " + client.getRemoteAddress());
                 client.write(buffer.duplicate());
+                successCount++;
+            } catch (IOException e) {
+                logger.warning("Failed to send packet to client" + ": " + e.getMessage());
+                failCount++;
             }
-        } catch (IOException e) {
-            Logger.getLogger(getClass().getSimpleName()).log(Level.SEVERE, e.getMessage());
         }
+
+        logger.info("Broadcast completed - Success: " + successCount + ", Failed: " + failCount);
     }
 
     public void shutdown() {
