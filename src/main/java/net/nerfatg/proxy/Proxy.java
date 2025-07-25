@@ -158,9 +158,7 @@ public class Proxy {
         try {
             for (SocketChannel client : connectedClients) {
                 Logger.getLogger(Proxy.class.getSimpleName()).log(Level.INFO, "Packet sent to client " + client.getRemoteAddress());
-                Logger.getLogger(Proxy.class.getSimpleName()).log(Level.INFO, IntStream.range(0, buffer.limit())
-                        .mapToObj(i -> Byte.toString(buffer.get(i)))
-                        .collect(Collectors.joining("")));
+                Logger.getLogger(Proxy.class.getSimpleName()).log(Level.INFO, Arrays.toString(buffer.array()));
 
                 client.write(buffer);
             }

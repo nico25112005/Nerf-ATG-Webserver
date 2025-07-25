@@ -118,7 +118,7 @@ public class SendGameInfoCommand extends Command {
                 "name" + random.nextInt(1000),
                 (byte) random.nextInt(10),
                 (byte) (1 + random.nextInt(10)),
-                PacketAction.Generic
+                PacketAction.Add
         );
         proxy.broadcast(packet);
         System.out.println("Sent GameInfo packet to all clients: " + packet);
@@ -161,7 +161,7 @@ public class SendGameInfoCommand extends Command {
             System.out.println("Usage: sendgameinfo -broadcast -manual -gametype <Team|DeathMatch> -gameid <id> -gamename <name> -playercount <count> -maxplayer <count>");
             return;
         }
-        GameInfo packet = new GameInfo(gameType, gameId, gameName, playerCount, maxPlayer, PacketAction.Generic);
+        GameInfo packet = new GameInfo(gameType, gameId, gameName, playerCount, maxPlayer, PacketAction.Add);
         proxy.broadcast(packet);
         System.out.println("Sent GameInfo packet to all clients: " + packet);
     }
@@ -183,7 +183,7 @@ public class SendGameInfoCommand extends Command {
                 "name" + random.nextInt(1000),
                 (byte) random.nextInt(10),
                 (byte) (1 + random.nextInt(10)),
-                PacketAction.Generic
+                PacketAction.Add
         );
         proxy.send(targetPlayer, packet);
         System.out.println("Sent GameInfo packet to " + targetPlayer + ": " + packet);
@@ -231,7 +231,7 @@ public class SendGameInfoCommand extends Command {
             System.out.println("Usage: sendgameinfo -singleconnection <targetPlayerId> -manual -gametype <Team|DeathMatch> -gameid <id> -gamename <name> -playercount <count> -maxplayer <count>");
             return;
         }
-        GameInfo packet = new GameInfo(gameType, gameId, gameName, playerCount, maxPlayer, PacketAction.Generic);
+        GameInfo packet = new GameInfo(gameType, gameId, gameName, playerCount, maxPlayer, PacketAction.Add);
         proxy.send(targetPlayer, packet);
         System.out.println("Sent GameInfo packet to " + targetPlayer + ": " + packet);
     }

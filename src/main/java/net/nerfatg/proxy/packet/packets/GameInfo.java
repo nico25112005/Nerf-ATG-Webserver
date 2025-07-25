@@ -51,7 +51,7 @@ public class GameInfo extends Packet {
     @Override
     public void writePayload(ByteBuffer buffer, int offset) throws BufferOverflowException {
         buffer.position(offset);
-        buffer.putInt(gameType.ordinal());
+        buffer.put((byte)gameType.ordinal());
         
         // Write gameId (8 bytes fixed)
         byte[] originalGameIdBytes = gameId.getBytes(java.nio.charset.StandardCharsets.UTF_8);
