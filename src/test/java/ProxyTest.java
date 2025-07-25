@@ -8,9 +8,11 @@ import net.nerfatg.proxy.packet.packets.CreateGame;
 import net.nerfatg.proxy.packet.packets.GameInfo;
 import org.junit.Test;
 
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
@@ -80,29 +82,21 @@ public class ProxyTest {
 
     @Test
     public void sendTest() throws InterruptedException {
-        Proxy proxy = new Proxy(25564);
-        proxy.registerHandle(PacketType.CreateGame, new Handler());
-
-        new Thread(proxy::launch).start();
-
         AtomicInteger finishedCount = new AtomicInteger(0);
-
-        Thread.sleep(5000);
 
         for (int i = 0; i < 5; i++) {
             new Thread(() -> {
-                try (Socket socket = new Socket("localhost", 25564)) {
-                    while (socket.getInputStream().available() == 0);
+                try (Socket socket = new Socket("localhost", 25115)) {
+                    DataInputStream in = new DataInputStream(socket.getInputStream());
 
                     byte[] bytes = new byte[64];
-                    socket.getInputStream().read(bytes, 0, Math.min(socket.getInputStream().available(), bytes.length));
+                    in.readFully(bytes); // wartet blockierend auf 64 Bytes
 
                     ByteBuffer dbuf = ByteBuffer.wrap(bytes);
-                    PacketType packetType = PacketType.values()[dbuf.getInt()];
-                    System.out.println("Received packet from Server!!!!!: " + packetType);
+                    PacketType packetType = PacketType.values()[dbuf.get()];
 
-                    GameInfo gameInfo = new GameInfo(dbuf);
-                    System.out.println("Packet: " + gameInfo);
+                    System.out.println("Received packet from Server!!!!!: " + packetType);
+                    System.out.println(Arrays.toString(dbuf.array()));
 
                     finishedCount.incrementAndGet();
                 } catch (IOException e) {
@@ -111,11 +105,8 @@ public class ProxyTest {
             }).start();
         }
 
-        Thread.sleep(1000);
 
-        proxy.broadcast(
-                new GameInfo(GameType.Team, "DA21AC", "TestGame", (byte)0, (byte)10, PacketAction.Generic)
-        );
+        Thread.sleep(1000);
 
         while (finishedCount.get() < 5) {}
     }

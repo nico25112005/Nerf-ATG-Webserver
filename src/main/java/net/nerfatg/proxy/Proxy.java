@@ -153,6 +153,7 @@ public class Proxy {
     public void broadcast(Packet packet) {
         ByteBuffer buffer = ByteBuffer.allocate(64);
         packet.toBytes(buffer);
+        buffer.position(0);
 
         try {
             for (SocketChannel client : connectedClients) {
@@ -161,8 +162,7 @@ public class Proxy {
                         .mapToObj(i -> Byte.toString(buffer.get(i)))
                         .collect(Collectors.joining("")));
 
-
-                client.write(buffer.duplicate());
+                client.write(buffer);
             }
         } catch (IOException e) {
             Logger.getLogger(getClass().getSimpleName()).log(Level.SEVERE, e.getMessage());
