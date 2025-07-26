@@ -6,15 +6,15 @@ import net.nerfatg.command.CommandArgumentValue;
 import net.nerfatg.command.CommandContext;
 import net.nerfatg.proxy.Proxy;
 import net.nerfatg.proxy.packet.PacketAction;
-import net.nerfatg.proxy.packet.packets.PlayerInfo;
+import net.nerfatg.proxy.packet.packets.MapPoint;
 
 import java.util.Random;
 
-public class SendPlayerInfoCommand extends Command {
+public class SendMapPointCommand extends Command {
     private final Proxy proxy;
     private final Random random = new Random();
 
-    public SendPlayerInfoCommand(String label, Proxy proxy) {
+    public SendMapPointCommand(String label, Proxy proxy) {
         super(label);
         this.proxy = proxy;
         init();
@@ -32,14 +32,18 @@ public class SendPlayerInfoCommand extends Command {
         }, null);
 
         CommandArgument manualBroadcast = new CommandArgument("-manual", 1, new CommandArgument[]{
-            new CommandArgument("-playerid", 2, new CommandArgument[]{
+            new CommandArgument("-name", 2, new CommandArgument[]{
                 new CommandArgumentValue(3, new CommandArgument[]{
-                    new CommandArgument("-playername", 4, new CommandArgument[]{
+                    new CommandArgument("-index", 4, new CommandArgument[]{
                         new CommandArgumentValue(5, new CommandArgument[]{
-                            new CommandArgument("-index", 6, new CommandArgument[]{
+                            new CommandArgument("-longitude", 6, new CommandArgument[]{
                                 new CommandArgumentValue(7, new CommandArgument[]{
-                                    new CommandArgument("-action", 8, new CommandArgumentValue(9, ctx -> broadcastManual(ctx))),
-                                    new CommandArgumentValue(8, ctx -> broadcastManual(ctx))
+                                    new CommandArgument("-latitude", 8, new CommandArgument[]{
+                                        new CommandArgumentValue(9, new CommandArgument[]{
+                                            new CommandArgument("-action", 10, new CommandArgumentValue(11, ctx -> broadcastManual(ctx))),
+                                            new CommandArgumentValue(10, ctx -> broadcastManual(ctx))
+                                        }, null)
+                                    }, null)
                                 }, null)
                             }, null)
                         }, null)
@@ -57,14 +61,15 @@ public class SendPlayerInfoCommand extends Command {
         CommandArgument randomSingle = new CommandArgument("-random", 2, ctx -> singleRandom(ctx));
 
         CommandArgument manualSingle = new CommandArgument("-manual", 2, new CommandArgument[]{
-                new CommandArgument("-playerid", 3, new CommandArgument[]{
+                new CommandArgument("-name", 3, new CommandArgument[]{
                         new CommandArgumentValue(4, new CommandArgument[]{
-                                new CommandArgument("-playername", 5, new CommandArgument[]{
+                                new CommandArgument("-index", 5, new CommandArgument[]{
                                         new CommandArgumentValue(6, new CommandArgument[]{
-                                                new CommandArgument("-index", 7, new CommandArgument[]{
+                                                new CommandArgument("-longitude", 7, new CommandArgument[]{
                                                         new CommandArgumentValue(8, new CommandArgument[]{
-                                                            new CommandArgument("-action", 9, new CommandArgumentValue(10, ctx -> singleManual(ctx))),
-                                                            new CommandArgumentValue(9, ctx -> singleManual(ctx))
+                                                                new CommandArgument("-latitude", 9, new CommandArgument[]{
+                                                                        new CommandArgumentValue(10, ctx -> singleManual(ctx))
+                                                                }, null)
                                                         }, null)
                                                 }, null)
                                         }, null)
@@ -85,20 +90,21 @@ public class SendPlayerInfoCommand extends Command {
     }
 
     private void printHelp() {
-        System.out.println("Usage for sendplayerinfo:");
-        System.out.println("  sendplayerinfo -help");
-        System.out.println("  sendplayerinfo -broadcast -random [-action <Generic|Add|Update|Remove|Replace>]");
-        System.out.println("  sendplayerinfo -broadcast -manual -playerid <id> -playername <name> -index <index> [-action <Generic|Add|Update|Remove|Replace>]");
-        System.out.println("  sendplayerinfo -singleconnection <targetPlayerId> -random [-action <Generic|Add|Update|Remove|Replace>]");
-        System.out.println("  sendplayerinfo -singleconnection <targetPlayerId> -manual -playerid <id> -playername <name> -index <index> [-action <Generic|Add|Update|Remove|Replace>]");
+        System.out.println("Usage for sendmappoint:");
+        System.out.println("  sendmappoint -help");
+        System.out.println("  sendmappoint -broadcast -random [-action <Generic|Add|Update|Remove|Replace>]");
+        System.out.println("  sendmappoint -broadcast -manual -name <name> -index <byte> -longitude <double> -latitude <double> [-action <Generic|Add|Update|Remove|Replace>]");
+        System.out.println("  sendmappoint -singleconnection <targetPlayerId> -random [-action <Generic|Add|Update|Remove|Replace>]");
+        System.out.println("  sendmappoint -singleconnection <targetPlayerId> -manual -name <name> -index <byte> -longitude <double> -latitude <double> [-action <Generic|Add|Update|Remove|Replace>]");
         System.out.println();
         System.out.println("-broadcast: Send to all clients");
         System.out.println("-singleconnection <targetPlayerId>: Send to a specific client");
         System.out.println("-random: Use random/placeholder values");
         System.out.println("-manual: Specify all properties as named arguments");
-        System.out.println("-playerid <id>: Player ID for the packet");
-        System.out.println("-playername <name>: Player name for the packet");
-        System.out.println("-index <index>: Index (team or other) for the packet");
+        System.out.println("-name <name>: Name of the map point");
+        System.out.println("-index <byte>: Index value");
+        System.out.println("-longitude <double>: Longitude");
+        System.out.println("-latitude <double>: Latitude");
         System.out.println("-action <Generic|Add|Update|Remove|Replace>: Packet action (optional, default: Add)");
     }
 
@@ -118,49 +124,63 @@ public class SendPlayerInfoCommand extends Command {
     private void broadcastRandom(CommandContext ctx) {
         PacketAction action = parseAction(ctx.args());
         if (action == null) return;
-        PlayerInfo packet = new PlayerInfo(
-                "player" + random.nextInt(1000),
+        MapPoint packet = new MapPoint(
                 "name" + random.nextInt(1000),
                 (byte) random.nextInt(10),
+                random.nextDouble() * 180 - 90,
+                random.nextDouble() * 360 - 180,
                 action
         );
         proxy.broadcast(packet);
-        System.out.println("Sent PlayerInfo packet to all clients: " + packet);
+        System.out.println("Sent MapPoint packet to all clients: " + packet);
     }
 
     private void broadcastManual(CommandContext ctx) {
         String[] args = ctx.args();
         PacketAction action = parseAction(args);
         if (action == null) return;
-        String playerId = null, playerName = null;
+        String name = null;
         Byte index = null;
+        Double longitude = null, latitude = null;
         for (int i = 0; i < args.length; i++) {
-            if ("-playerid".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
-                playerId = args[i + 1];
-            } else if ("-playername".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
-                playerName = args[i + 1];
+            if ("-name".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
+                name = args[i + 1];
             } else if ("-index".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
                 try {
                     index = Byte.parseByte(args[i + 1]);
                 } catch (NumberFormatException e) {
-                    System.out.println("Index must be a number");
+                    System.out.println("index must be a number");
+                    return;
+                }
+            } else if ("-longitude".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
+                try {
+                    longitude = Double.parseDouble(args[i + 1]);
+                } catch (NumberFormatException e) {
+                    System.out.println("longitude must be a number");
+                    return;
+                }
+            } else if ("-latitude".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
+                try {
+                    latitude = Double.parseDouble(args[i + 1]);
+                } catch (NumberFormatException e) {
+                    System.out.println("latitude must be a number");
                     return;
                 }
             }
         }
-        if (playerId == null || playerName == null || index == null) {
-            System.out.println("Usage: sendplayerinfo -broadcast -manual -playerid <id> -playername <name> -index <index> [-action <action>]");
+        if (name == null || index == null || longitude == null || latitude == null) {
+            System.out.println("Usage: sendmappoint -broadcast -manual -name <name> -index <byte> -longitude <double> -latitude <double> [-action <action>]");
             return;
         }
-        PlayerInfo packet = new PlayerInfo(playerId, playerName, index, action);
+        MapPoint packet = new MapPoint(name, index, longitude, latitude, action);
         proxy.broadcast(packet);
-        System.out.println("Sent PlayerInfo packet to all clients: " + packet);
+        System.out.println("Sent MapPoint packet to all clients: " + packet);
     }
 
     private void singleRandom(CommandContext ctx) {
         String[] args = ctx.args();
         if (args.length < 2) {
-            System.out.println("Usage: sendplayerinfo -singleconnection <playerId> -random");
+            System.out.println("Usage: sendmappoint -singleconnection <playerId> -random");
             return;
         }
         String targetPlayer = args[1];
@@ -168,31 +188,45 @@ public class SendPlayerInfoCommand extends Command {
             System.out.println("No such playerId connected: " + targetPlayer);
             return;
         }
-        PlayerInfo packet = new PlayerInfo(
-                "player" + random.nextInt(1000),
+        MapPoint packet = new MapPoint(
                 "name" + random.nextInt(1000),
                 (byte) random.nextInt(10),
+                random.nextDouble() * 180 - 90,
+                random.nextDouble() * 360 - 180,
                 PacketAction.Add
         );
         proxy.send(targetPlayer, packet);
-        System.out.println("Sent PlayerInfo packet to " + targetPlayer + ": " + packet);
+        System.out.println("Sent MapPoint packet to " + targetPlayer + ": " + packet);
     }
 
     private void singleManual(CommandContext ctx) {
         String[] args = ctx.args();
         String targetPlayer = args[1];
-        String playerId = null, playerName = null;
+        String name = null;
         Byte index = null;
+        Double longitude = null, latitude = null;
         for (int i = 0; i < args.length; i++) {
-            if ("-playerid".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
-                playerId = args[i + 1];
-            } else if ("-playername".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
-                playerName = args[i + 1];
+            if ("-name".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
+                name = args[i + 1];
             } else if ("-index".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
                 try {
                     index = Byte.parseByte(args[i + 1]);
                 } catch (NumberFormatException e) {
-                    System.out.println("Index must be a number");
+                    System.out.println("index must be a number");
+                    return;
+                }
+            } else if ("-longitude".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
+                try {
+                    longitude = Double.parseDouble(args[i + 1]);
+                } catch (NumberFormatException e) {
+                    System.out.println("longitude must be a number");
+                    return;
+                }
+            } else if ("-latitude".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
+                try {
+                    latitude = Double.parseDouble(args[i + 1]);
+                } catch (NumberFormatException e) {
+                    System.out.println("latitude must be a number");
                     return;
                 }
             }
@@ -201,12 +235,12 @@ public class SendPlayerInfoCommand extends Command {
             System.out.println("No such playerId connected: " + targetPlayer);
             return;
         }
-        if (playerId == null || playerName == null || index == null) {
-            System.out.println("Usage: sendplayerinfo -singleconnection <targetPlayerId> -manual -playerid <id> -playername <name> -index <index>");
+        if (name == null || index == null || longitude == null || latitude == null) {
+            System.out.println("Usage: sendmappoint -singleconnection <targetPlayerId> -manual -name <name> -index <byte> -longitude <double> -latitude <double>");
             return;
         }
-        PlayerInfo packet = new PlayerInfo(playerId, playerName, index, PacketAction.Add);
+        MapPoint packet = new MapPoint(name, index, longitude, latitude, PacketAction.Add);
         proxy.send(targetPlayer, packet);
-        System.out.println("Sent PlayerInfo packet to " + targetPlayer + ": " + packet);
+        System.out.println("Sent MapPoint packet to " + targetPlayer + ": " + packet);
     }
 } 

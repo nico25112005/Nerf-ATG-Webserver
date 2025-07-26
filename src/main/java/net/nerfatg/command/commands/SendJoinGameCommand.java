@@ -6,15 +6,15 @@ import net.nerfatg.command.CommandArgumentValue;
 import net.nerfatg.command.CommandContext;
 import net.nerfatg.proxy.Proxy;
 import net.nerfatg.proxy.packet.PacketAction;
-import net.nerfatg.proxy.packet.packets.PlayerInfo;
+import net.nerfatg.proxy.packet.packets.JoinGame;
 
 import java.util.Random;
 
-public class SendPlayerInfoCommand extends Command {
+public class SendJoinGameCommand extends Command {
     private final Proxy proxy;
     private final Random random = new Random();
 
-    public SendPlayerInfoCommand(String label, Proxy proxy) {
+    public SendJoinGameCommand(String label, Proxy proxy) {
         super(label);
         this.proxy = proxy;
         init();
@@ -34,14 +34,10 @@ public class SendPlayerInfoCommand extends Command {
         CommandArgument manualBroadcast = new CommandArgument("-manual", 1, new CommandArgument[]{
             new CommandArgument("-playerid", 2, new CommandArgument[]{
                 new CommandArgumentValue(3, new CommandArgument[]{
-                    new CommandArgument("-playername", 4, new CommandArgument[]{
+                    new CommandArgument("-gamename", 4, new CommandArgument[]{
                         new CommandArgumentValue(5, new CommandArgument[]{
-                            new CommandArgument("-index", 6, new CommandArgument[]{
-                                new CommandArgumentValue(7, new CommandArgument[]{
-                                    new CommandArgument("-action", 8, new CommandArgumentValue(9, ctx -> broadcastManual(ctx))),
-                                    new CommandArgumentValue(8, ctx -> broadcastManual(ctx))
-                                }, null)
-                            }, null)
+                            new CommandArgument("-action", 6, new CommandArgumentValue(7, ctx -> broadcastManual(ctx))),
+                            new CommandArgumentValue(6, ctx -> broadcastManual(ctx))
                         }, null)
                     }, null)
                 }, null)
@@ -59,14 +55,10 @@ public class SendPlayerInfoCommand extends Command {
         CommandArgument manualSingle = new CommandArgument("-manual", 2, new CommandArgument[]{
                 new CommandArgument("-playerid", 3, new CommandArgument[]{
                         new CommandArgumentValue(4, new CommandArgument[]{
-                                new CommandArgument("-playername", 5, new CommandArgument[]{
+                                new CommandArgument("-gamename", 5, new CommandArgument[]{
                                         new CommandArgumentValue(6, new CommandArgument[]{
-                                                new CommandArgument("-index", 7, new CommandArgument[]{
-                                                        new CommandArgumentValue(8, new CommandArgument[]{
-                                                            new CommandArgument("-action", 9, new CommandArgumentValue(10, ctx -> singleManual(ctx))),
-                                                            new CommandArgumentValue(9, ctx -> singleManual(ctx))
-                                                        }, null)
-                                                }, null)
+                                            new CommandArgument("-action", 7, new CommandArgumentValue(8, ctx -> singleManual(ctx))),
+                                            new CommandArgumentValue(7, ctx -> singleManual(ctx))
                                         }, null)
                                 }, null)
                         }, null)
@@ -85,20 +77,19 @@ public class SendPlayerInfoCommand extends Command {
     }
 
     private void printHelp() {
-        System.out.println("Usage for sendplayerinfo:");
-        System.out.println("  sendplayerinfo -help");
-        System.out.println("  sendplayerinfo -broadcast -random [-action <Generic|Add|Update|Remove|Replace>]");
-        System.out.println("  sendplayerinfo -broadcast -manual -playerid <id> -playername <name> -index <index> [-action <Generic|Add|Update|Remove|Replace>]");
-        System.out.println("  sendplayerinfo -singleconnection <targetPlayerId> -random [-action <Generic|Add|Update|Remove|Replace>]");
-        System.out.println("  sendplayerinfo -singleconnection <targetPlayerId> -manual -playerid <id> -playername <name> -index <index> [-action <Generic|Add|Update|Remove|Replace>]");
+        System.out.println("Usage for sendjoingame:");
+        System.out.println("  sendjoingame -help");
+        System.out.println("  sendjoingame -broadcast -random [-action <Generic|Add|Update|Remove|Replace>]");
+        System.out.println("  sendjoingame -broadcast -manual -playerid <id> -gamename <name> [-action <Generic|Add|Update|Remove|Replace>]");
+        System.out.println("  sendjoingame -singleconnection <targetPlayerId> -random [-action <Generic|Add|Update|Remove|Replace>]");
+        System.out.println("  sendjoingame -singleconnection <targetPlayerId> -manual -playerid <id> -gamename <name> [-action <Generic|Add|Update|Remove|Replace>]");
         System.out.println();
         System.out.println("-broadcast: Send to all clients");
         System.out.println("-singleconnection <targetPlayerId>: Send to a specific client");
         System.out.println("-random: Use random/placeholder values");
         System.out.println("-manual: Specify all properties as named arguments");
-        System.out.println("-playerid <id>: Player ID for the packet");
-        System.out.println("-playername <name>: Player name for the packet");
-        System.out.println("-index <index>: Index (team or other) for the packet");
+        System.out.println("-playerid <id>: Player ID");
+        System.out.println("-gamename <name>: Game name");
         System.out.println("-action <Generic|Add|Update|Remove|Replace>: Packet action (optional, default: Add)");
     }
 
@@ -118,49 +109,40 @@ public class SendPlayerInfoCommand extends Command {
     private void broadcastRandom(CommandContext ctx) {
         PacketAction action = parseAction(ctx.args());
         if (action == null) return;
-        PlayerInfo packet = new PlayerInfo(
+        JoinGame packet = new JoinGame(
                 "player" + random.nextInt(1000),
                 "name" + random.nextInt(1000),
-                (byte) random.nextInt(10),
                 action
         );
         proxy.broadcast(packet);
-        System.out.println("Sent PlayerInfo packet to all clients: " + packet);
+        System.out.println("Sent JoinGame packet to all clients: " + packet);
     }
 
     private void broadcastManual(CommandContext ctx) {
         String[] args = ctx.args();
         PacketAction action = parseAction(args);
         if (action == null) return;
-        String playerId = null, playerName = null;
-        Byte index = null;
+        String playerId = null, gameName = null;
         for (int i = 0; i < args.length; i++) {
             if ("-playerid".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
                 playerId = args[i + 1];
-            } else if ("-playername".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
-                playerName = args[i + 1];
-            } else if ("-index".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
-                try {
-                    index = Byte.parseByte(args[i + 1]);
-                } catch (NumberFormatException e) {
-                    System.out.println("Index must be a number");
-                    return;
-                }
+            } else if ("-gamename".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
+                gameName = args[i + 1];
             }
         }
-        if (playerId == null || playerName == null || index == null) {
-            System.out.println("Usage: sendplayerinfo -broadcast -manual -playerid <id> -playername <name> -index <index> [-action <action>]");
+        if (playerId == null || gameName == null) {
+            System.out.println("Usage: sendjoingame -broadcast -manual -playerid <id> -gamename <name> [-action <action>]");
             return;
         }
-        PlayerInfo packet = new PlayerInfo(playerId, playerName, index, action);
+        JoinGame packet = new JoinGame(playerId, gameName, action);
         proxy.broadcast(packet);
-        System.out.println("Sent PlayerInfo packet to all clients: " + packet);
+        System.out.println("Sent JoinGame packet to all clients: " + packet);
     }
 
     private void singleRandom(CommandContext ctx) {
         String[] args = ctx.args();
         if (args.length < 2) {
-            System.out.println("Usage: sendplayerinfo -singleconnection <playerId> -random");
+            System.out.println("Usage: sendjoingame -singleconnection <playerId> -random");
             return;
         }
         String targetPlayer = args[1];
@@ -168,45 +150,36 @@ public class SendPlayerInfoCommand extends Command {
             System.out.println("No such playerId connected: " + targetPlayer);
             return;
         }
-        PlayerInfo packet = new PlayerInfo(
+        JoinGame packet = new JoinGame(
                 "player" + random.nextInt(1000),
                 "name" + random.nextInt(1000),
-                (byte) random.nextInt(10),
                 PacketAction.Add
         );
         proxy.send(targetPlayer, packet);
-        System.out.println("Sent PlayerInfo packet to " + targetPlayer + ": " + packet);
+        System.out.println("Sent JoinGame packet to " + targetPlayer + ": " + packet);
     }
 
     private void singleManual(CommandContext ctx) {
         String[] args = ctx.args();
         String targetPlayer = args[1];
-        String playerId = null, playerName = null;
-        Byte index = null;
+        String playerId = null, gameName = null;
         for (int i = 0; i < args.length; i++) {
             if ("-playerid".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
                 playerId = args[i + 1];
-            } else if ("-playername".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
-                playerName = args[i + 1];
-            } else if ("-index".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
-                try {
-                    index = Byte.parseByte(args[i + 1]);
-                } catch (NumberFormatException e) {
-                    System.out.println("Index must be a number");
-                    return;
-                }
+            } else if ("-gamename".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
+                gameName = args[i + 1];
             }
         }
         if (!proxy.getPlayerClients().containsKey(targetPlayer)) {
             System.out.println("No such playerId connected: " + targetPlayer);
             return;
         }
-        if (playerId == null || playerName == null || index == null) {
-            System.out.println("Usage: sendplayerinfo -singleconnection <targetPlayerId> -manual -playerid <id> -playername <name> -index <index>");
+        if (playerId == null || gameName == null) {
+            System.out.println("Usage: sendjoingame -singleconnection <targetPlayerId> -manual -playerid <id> -gamename <name>");
             return;
         }
-        PlayerInfo packet = new PlayerInfo(playerId, playerName, index, PacketAction.Add);
+        JoinGame packet = new JoinGame(playerId, gameName, PacketAction.Add);
         proxy.send(targetPlayer, packet);
-        System.out.println("Sent PlayerInfo packet to " + targetPlayer + ": " + packet);
+        System.out.println("Sent JoinGame packet to " + targetPlayer + ": " + packet);
     }
 } 

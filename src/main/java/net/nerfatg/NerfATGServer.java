@@ -8,6 +8,17 @@ import net.nerfatg.command.commands.VersionCommand;
 import net.nerfatg.command.commands.ConnectionsCommand;
 import net.nerfatg.command.commands.SendPlayerInfoCommand;
 import net.nerfatg.command.commands.SendGameInfoCommand;
+import net.nerfatg.command.commands.SendCreateGameCommand;
+import net.nerfatg.command.commands.SendJoinGameCommand;
+import net.nerfatg.command.commands.SendSwitchTeamCommand;
+import net.nerfatg.command.commands.SendStartGameCommand;
+import net.nerfatg.command.commands.SendPlayerReadyCommand;
+import net.nerfatg.command.commands.SendActivateAbilityCommand;
+import net.nerfatg.command.commands.SendMapPointCommand;
+import net.nerfatg.command.commands.SendPlayerStatusCommand;
+import net.nerfatg.command.commands.SendGameStartedCommand;
+import net.nerfatg.command.commands.SendReadyPlayerCountCommand;
+import net.nerfatg.command.commands.SendBaseLocationCommand;
 import net.nerfatg.game.GameHandler;
 import net.nerfatg.proxy.Proxy;
 import net.nerfatg.proxy.packet.PacketType;
@@ -64,11 +75,21 @@ public class NerfATGServer {
         this.taskScheduler.runRepeatingTask(task);
 
 
-        this.commandHandler.registerCommand(new VersionCommand("version"));
-        this.commandHandler.registerCommand(new BroadcastCommand("broadcast", this));
+        //this.commandHandler.registerCommand(new BroadcastCommand("broadcast", this));
         this.commandHandler.registerCommand(new ConnectionsCommand("connections", proxy.getPlayerClients()));
         this.commandHandler.registerCommand(new SendPlayerInfoCommand("sendplayerinfo", proxy));
         this.commandHandler.registerCommand(new SendGameInfoCommand("sendgameinfo", proxy));
+        this.commandHandler.registerCommand(new SendCreateGameCommand("sendcreategame", proxy));
+        this.commandHandler.registerCommand(new SendJoinGameCommand("sendjoingame", proxy));
+        this.commandHandler.registerCommand(new SendSwitchTeamCommand("sendswitchteam", proxy));
+        this.commandHandler.registerCommand(new SendStartGameCommand("sendstartgame", proxy));
+        this.commandHandler.registerCommand(new SendPlayerReadyCommand("sendplayerready", proxy));
+        this.commandHandler.registerCommand(new SendActivateAbilityCommand("sendactivateability", proxy));
+        this.commandHandler.registerCommand(new SendMapPointCommand("sendmappoint", proxy));
+        this.commandHandler.registerCommand(new SendPlayerStatusCommand("sendplayerstatus", proxy));
+        this.commandHandler.registerCommand(new SendGameStartedCommand("sendgamestarted", proxy));
+        this.commandHandler.registerCommand(new SendReadyPlayerCountCommand("sendreadyplayercount", proxy));
+        this.commandHandler.registerCommand(new SendBaseLocationCommand("sendbaselocation", proxy));
     }
 
     private void startCommandHandler() {
