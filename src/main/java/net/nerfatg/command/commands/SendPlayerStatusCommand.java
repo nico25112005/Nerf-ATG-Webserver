@@ -21,14 +21,13 @@ public class SendPlayerStatusCommand extends Command {
     }
 
     private void init() {
-        // -help argument
         CommandArgument help = new CommandArgument("-help", 0, ctx -> printHelp());
         addArgument(help);
 
-        // -broadcast branch
         CommandArgument randomBroadcast = new CommandArgument("-random", 1, new CommandArgument[]{
-            new CommandArgument("-action", 2, new CommandArgumentValue(3, ctx -> broadcastRandom(ctx))),
-            new CommandArgumentValue(2, ctx -> broadcastRandom(ctx))
+            new CommandArgument("-action", 2, new CommandArgument[]{
+                new CommandArgumentValue(3, (this::broadcastRandom))
+            }, null)
         }, null);
 
         CommandArgument manualBroadcast = new CommandArgument("-manual", 1, new CommandArgument[]{
@@ -44,8 +43,9 @@ public class SendPlayerStatusCommand extends Command {
                                                 new CommandArgumentValue(11, new CommandArgument[]{
                                                     new CommandArgument("-health", 12, new CommandArgument[]{
                                                         new CommandArgumentValue(13, new CommandArgument[]{
-                                                            new CommandArgument("-action", 14, new CommandArgumentValue(15, ctx -> broadcastManual(ctx))),
-                                                            new CommandArgumentValue(14, ctx -> broadcastManual(ctx))
+                                                            new CommandArgument("-action", 14, new CommandArgument[]{
+                                                                new CommandArgumentValue(15, ctx -> broadcastManual(ctx))
+                                                            }, null)
                                                         }, null)
                                                     }, null)
                                                 }, null)
@@ -61,47 +61,41 @@ public class SendPlayerStatusCommand extends Command {
         }, null);
 
         CommandArgument broadcast = new CommandArgument("-broadcast", 0, new CommandArgument[]{
-                randomBroadcast,
-                manualBroadcast
+            randomBroadcast,
+            manualBroadcast
         }, null);
 
-        // -singleconnection branch
         CommandArgument randomSingle = new CommandArgument("-random", 2, ctx -> singleRandom(ctx));
-
         CommandArgument manualSingle = new CommandArgument("-manual", 2, new CommandArgument[]{
-                new CommandArgument("-playerid", 3, new CommandArgument[]{
-                        new CommandArgumentValue(4, new CommandArgument[]{
-                                new CommandArgument("-name", 5, new CommandArgument[]{
-                                        new CommandArgumentValue(6, new CommandArgument[]{
-                                                new CommandArgument("-index", 7, new CommandArgument[]{
-                                                        new CommandArgumentValue(8, new CommandArgument[]{
-                                                                new CommandArgument("-longitude", 9, new CommandArgument[]{
-                                                                        new CommandArgumentValue(10, new CommandArgument[]{
-                                                                                new CommandArgument("-latitude", 11, new CommandArgument[]{
-                                                                                        new CommandArgumentValue(12, new CommandArgument[]{
-                                                                                                new CommandArgument("-health", 13, new CommandArgument[]{
-                                                                                                        new CommandArgumentValue(14, new CommandArgument[]{
-                                                                                                                new CommandArgument("-action", 15, new CommandArgumentValue(16, ctx -> singleManual(ctx))),
-                                                                                                                new CommandArgumentValue(15, ctx -> singleManual(ctx))
-                                                                                                        }, null)
-                                                                                                }, null)
-                                                                                        }, null)
-                                                                                }, null)
-                                                                        }, null)
-                                                                }, null)
-                                                        }, null)
+            new CommandArgument("-playerid", 3, new CommandArgument[]{
+                new CommandArgumentValue(4, new CommandArgument[]{
+                    new CommandArgument("-name", 5, new CommandArgument[]{
+                        new CommandArgumentValue(6, new CommandArgument[]{
+                            new CommandArgument("-index", 7, new CommandArgument[]{
+                                new CommandArgumentValue(8, new CommandArgument[]{
+                                    new CommandArgument("-longitude", 9, new CommandArgument[]{
+                                        new CommandArgumentValue(10, new CommandArgument[]{
+                                            new CommandArgument("-latitude", 11, new CommandArgument[]{
+                                                new CommandArgumentValue(12, new CommandArgument[]{
+                                                    new CommandArgument("-health", 13, new CommandArgument[]{
+                                                        new CommandArgumentValue(14, ctx -> singleManual(ctx))
+                                                    }, null)
                                                 }, null)
+                                            }, null)
                                         }, null)
+                                    }, null)
                                 }, null)
+                            }, null)
                         }, null)
+                    }, null)
                 }, null)
+            }, null)
         }, null);
-
         CommandArgument singleConnection = new CommandArgument("-singleconnection", 0, new CommandArgument[]{
-                new CommandArgumentValue(1, new CommandArgument[]{
-                        randomSingle,
-                        manualSingle
-                }, null)
+            new CommandArgumentValue(1, new CommandArgument[]{
+                randomSingle,
+                manualSingle
+            }, null)
         }, null);
 
         addArgument(broadcast);
@@ -125,7 +119,7 @@ public class SendPlayerStatusCommand extends Command {
         System.out.println("-index <byte>: Team index");
         System.out.println("-longitude <double>: Longitude");
         System.out.println("-latitude <double>: Latitude");
-        System.out.println("-health <byte>: Health value");
+        System.out.println("-health <byte>: Health");
         System.out.println("-action <Generic|Add|Update|Remove|Replace>: Packet action (optional, default: Add)");
     }
 
@@ -142,17 +136,18 @@ public class SendPlayerStatusCommand extends Command {
         }
         return PacketAction.Add;
     }
+
     private void broadcastRandom(CommandContext ctx) {
         PacketAction action = parseAction(ctx.args());
         if (action == null) return;
         PlayerStatus packet = new PlayerStatus(
-                "player" + random.nextInt(1000),
-                "name" + random.nextInt(1000),
-                (byte) random.nextInt(10),
-                random.nextDouble() * 180 - 90,
-                random.nextDouble() * 360 - 180,
-                (byte) random.nextInt(100),
-                action
+            "player" + random.nextInt(1000),
+            "name" + random.nextInt(1000),
+            (byte) random.nextInt(2),
+            random.nextDouble() * 180 - 90,
+            random.nextDouble() * 360 - 180,
+            (byte) (random.nextInt(100)),
+            action
         );
         proxy.broadcast(packet);
         System.out.println("Sent PlayerStatus packet to all clients: " + packet);
@@ -174,28 +169,28 @@ public class SendPlayerStatusCommand extends Command {
                 try {
                     index = Byte.parseByte(args[i + 1]);
                 } catch (NumberFormatException e) {
-                    System.out.println("index must be a number");
+                    System.out.println("index must be a byte");
                     return;
                 }
             } else if ("-longitude".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
                 try {
                     longitude = Double.parseDouble(args[i + 1]);
                 } catch (NumberFormatException e) {
-                    System.out.println("longitude must be a number");
+                    System.out.println("longitude must be a double");
                     return;
                 }
             } else if ("-latitude".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
                 try {
                     latitude = Double.parseDouble(args[i + 1]);
                 } catch (NumberFormatException e) {
-                    System.out.println("latitude must be a number");
+                    System.out.println("latitude must be a double");
                     return;
                 }
             } else if ("-health".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
                 try {
                     health = Byte.parseByte(args[i + 1]);
                 } catch (NumberFormatException e) {
-                    System.out.println("health must be a number");
+                    System.out.println("health must be a byte");
                     return;
                 }
             }
@@ -220,15 +215,14 @@ public class SendPlayerStatusCommand extends Command {
             System.out.println("No such playerId connected: " + targetPlayer);
             return;
         }
-        PacketAction action = parseAction(args);
         PlayerStatus packet = new PlayerStatus(
-                "player" + random.nextInt(1000),
-                "name" + random.nextInt(1000),
-                (byte) random.nextInt(10),
-                random.nextDouble() * 180 - 90,
-                random.nextDouble() * 360 - 180,
-                (byte) random.nextInt(100),
-                action
+            "player" + random.nextInt(1000),
+            "name" + random.nextInt(1000),
+            (byte) random.nextInt(2),
+            random.nextDouble() * 180 - 90,
+            random.nextDouble() * 360 - 180,
+            (byte) (random.nextInt(100)),
+            PacketAction.Add
         );
         proxy.send(targetPlayer, packet);
         System.out.println("Sent PlayerStatus packet to " + targetPlayer + ": " + packet);
@@ -249,28 +243,28 @@ public class SendPlayerStatusCommand extends Command {
                 try {
                     index = Byte.parseByte(args[i + 1]);
                 } catch (NumberFormatException e) {
-                    System.out.println("index must be a number");
+                    System.out.println("index must be a byte");
                     return;
                 }
             } else if ("-longitude".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
                 try {
                     longitude = Double.parseDouble(args[i + 1]);
                 } catch (NumberFormatException e) {
-                    System.out.println("longitude must be a number");
+                    System.out.println("longitude must be a double");
                     return;
                 }
             } else if ("-latitude".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
                 try {
                     latitude = Double.parseDouble(args[i + 1]);
                 } catch (NumberFormatException e) {
-                    System.out.println("latitude must be a number");
+                    System.out.println("latitude must be a double");
                     return;
                 }
             } else if ("-health".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
                 try {
                     health = Byte.parseByte(args[i + 1]);
                 } catch (NumberFormatException e) {
-                    System.out.println("health must be a number");
+                    System.out.println("health must be a byte");
                     return;
                 }
             }
@@ -280,11 +274,10 @@ public class SendPlayerStatusCommand extends Command {
             return;
         }
         if (playerId == null || name == null || index == null || longitude == null || latitude == null || health == null) {
-            System.out.println("Usage: sendplayerstatus -singleconnection <targetPlayerId> -manual -playerid <id> -name <name> -index <byte> -longitude <double> -latitude <double> -health <byte> [-action <action>]");
+            System.out.println("Usage: sendplayerstatus -singleconnection <targetPlayerId> -manual -playerid <id> -name <name> -index <byte> -longitude <double> -latitude <double> -health <byte>");
             return;
         }
-        PacketAction action = parseAction(args);
-        PlayerStatus packet = new PlayerStatus(playerId, name, index, longitude, latitude, health, action);
+        PlayerStatus packet = new PlayerStatus(playerId, name, index, longitude, latitude, health, PacketAction.Add);
         proxy.send(targetPlayer, packet);
         System.out.println("Sent PlayerStatus packet to " + targetPlayer + ": " + packet);
     }

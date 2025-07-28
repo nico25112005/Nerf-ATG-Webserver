@@ -21,14 +21,13 @@ public class SendBaseLocationCommand extends Command {
     }
 
     private void init() {
-        // -help argument
         CommandArgument help = new CommandArgument("-help", 0, ctx -> printHelp());
         addArgument(help);
 
-        // -broadcast branch
         CommandArgument randomBroadcast = new CommandArgument("-random", 1, new CommandArgument[]{
-            new CommandArgument("-action", 2, new CommandArgumentValue(3, ctx -> broadcastRandom(ctx))),
-            new CommandArgumentValue(2, ctx -> broadcastRandom(ctx))
+            new CommandArgument("-action", 2, new CommandArgument[]{
+                new CommandArgumentValue(3, (this::broadcastRandom))
+            }, null)
         }, null);
 
         CommandArgument manualBroadcast = new CommandArgument("-manual", 1, new CommandArgument[]{
@@ -38,8 +37,9 @@ public class SendBaseLocationCommand extends Command {
                         new CommandArgumentValue(5, new CommandArgument[]{
                             new CommandArgument("-latitude", 6, new CommandArgument[]{
                                 new CommandArgumentValue(7, new CommandArgument[]{
-                                    new CommandArgument("-action", 8, new CommandArgumentValue(9, ctx -> broadcastManual(ctx))),
-                                    new CommandArgumentValue(8, ctx -> broadcastManual(ctx))
+                                    new CommandArgument("-action", 8, new CommandArgument[]{
+                                        new CommandArgumentValue(9, ctx -> broadcastManual(ctx))
+                                    }, null)
                                 }, null)
                             }, null)
                         }, null)
@@ -49,35 +49,29 @@ public class SendBaseLocationCommand extends Command {
         }, null);
 
         CommandArgument broadcast = new CommandArgument("-broadcast", 0, new CommandArgument[]{
-                randomBroadcast,
-                manualBroadcast
+            randomBroadcast,
+            manualBroadcast
         }, null);
 
-        // -singleconnection branch
         CommandArgument randomSingle = new CommandArgument("-random", 2, ctx -> singleRandom(ctx));
-
         CommandArgument manualSingle = new CommandArgument("-manual", 2, new CommandArgument[]{
-                new CommandArgument("-teamindex", 3, new CommandArgument[]{
-                        new CommandArgumentValue(4, new CommandArgument[]{
-                                new CommandArgument("-longitude", 5, new CommandArgument[]{
-                                        new CommandArgumentValue(6, new CommandArgument[]{
-                                                new CommandArgument("-latitude", 7, new CommandArgument[]{
-                                                        new CommandArgumentValue(8, new CommandArgument[]{
-                                                                new CommandArgument("-action", 9, new CommandArgumentValue(10, ctx -> singleManual(ctx))),
-                                                                new CommandArgumentValue(9, ctx -> singleManual(ctx))
-                                                        }, null)
-                                                }, null)
-                                        }, null)
-                                }, null)
+            new CommandArgument("-teamindex", 3, new CommandArgument[]{
+                new CommandArgumentValue(4, new CommandArgument[]{
+                    new CommandArgument("-longitude", 5, new CommandArgument[]{
+                        new CommandArgumentValue(6, new CommandArgument[]{
+                            new CommandArgument("-latitude", 7, new CommandArgument[]{
+                                new CommandArgumentValue(8, ctx -> singleManual(ctx))
+                            }, null)
                         }, null)
+                    }, null)
                 }, null)
+            }, null)
         }, null);
-
         CommandArgument singleConnection = new CommandArgument("-singleconnection", 0, new CommandArgument[]{
-                new CommandArgumentValue(1, new CommandArgument[]{
-                        randomSingle,
-                        manualSingle
-                }, null)
+            new CommandArgumentValue(1, new CommandArgument[]{
+                randomSingle,
+                manualSingle
+            }, null)
         }, null);
 
         addArgument(broadcast);
@@ -115,15 +109,14 @@ public class SendBaseLocationCommand extends Command {
         }
         return PacketAction.Add;
     }
+
     private void broadcastRandom(CommandContext ctx) {
         PacketAction action = parseAction(ctx.args());
         if (action == null) return;
-        BaseLocation packet = new BaseLocation(
-                (byte) random.nextInt(10),
-                random.nextDouble() * 180 - 90,
-                random.nextDouble() * 360 - 180,
-                action
-        );
+        byte teamIndex = (byte) random.nextInt(2); // 0 or 1
+        double longitude = random.nextDouble() * 180 - 90; // -90 to +90
+        double latitude = random.nextDouble() * 360 - 180; // -180 to +180
+        BaseLocation packet = new BaseLocation(teamIndex, longitude, latitude, action);
         proxy.broadcast(packet);
         System.out.println("Sent BaseLocation packet to all clients: " + packet);
     }
@@ -139,21 +132,21 @@ public class SendBaseLocationCommand extends Command {
                 try {
                     teamIndex = Byte.parseByte(args[i + 1]);
                 } catch (NumberFormatException e) {
-                    System.out.println("teamindex must be a number");
+                    System.out.println("teamindex must be a byte");
                     return;
                 }
             } else if ("-longitude".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
                 try {
                     longitude = Double.parseDouble(args[i + 1]);
                 } catch (NumberFormatException e) {
-                    System.out.println("longitude must be a number");
+                    System.out.println("longitude must be a double");
                     return;
                 }
             } else if ("-latitude".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
                 try {
                     latitude = Double.parseDouble(args[i + 1]);
                 } catch (NumberFormatException e) {
-                    System.out.println("latitude must be a number");
+                    System.out.println("latitude must be a double");
                     return;
                 }
             }
@@ -178,12 +171,10 @@ public class SendBaseLocationCommand extends Command {
             System.out.println("No such playerId connected: " + targetPlayer);
             return;
         }
-        BaseLocation packet = new BaseLocation(
-                (byte) random.nextInt(10),
-                random.nextDouble() * 180 - 90,
-                random.nextDouble() * 360 - 180,
-                PacketAction.Add
-        );
+        byte teamIndex = (byte) random.nextInt(2);
+        double longitude = random.nextDouble() * 180 - 90;
+        double latitude = random.nextDouble() * 360 - 180;
+        BaseLocation packet = new BaseLocation(teamIndex, longitude, latitude, PacketAction.Add);
         proxy.send(targetPlayer, packet);
         System.out.println("Sent BaseLocation packet to " + targetPlayer + ": " + packet);
     }
@@ -198,21 +189,21 @@ public class SendBaseLocationCommand extends Command {
                 try {
                     teamIndex = Byte.parseByte(args[i + 1]);
                 } catch (NumberFormatException e) {
-                    System.out.println("teamindex must be a number");
+                    System.out.println("teamindex must be a byte");
                     return;
                 }
             } else if ("-longitude".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
                 try {
                     longitude = Double.parseDouble(args[i + 1]);
                 } catch (NumberFormatException e) {
-                    System.out.println("longitude must be a number");
+                    System.out.println("longitude must be a double");
                     return;
                 }
             } else if ("-latitude".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
                 try {
                     latitude = Double.parseDouble(args[i + 1]);
                 } catch (NumberFormatException e) {
-                    System.out.println("latitude must be a number");
+                    System.out.println("latitude must be a double");
                     return;
                 }
             }

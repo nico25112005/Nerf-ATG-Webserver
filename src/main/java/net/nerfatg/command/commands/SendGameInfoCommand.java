@@ -26,10 +26,18 @@ public class SendGameInfoCommand extends Command {
         CommandArgument help = new CommandArgument("-help", 0, ctx -> printHelp());
         addArgument(help);
 
+        /*
         // -broadcast branch
         CommandArgument randomBroadcast = new CommandArgument("-random", 1, new CommandArgument[]{
             new CommandArgument("-action", 2, new CommandArgumentValue(3, ctx -> broadcastRandom(ctx))),
             new CommandArgumentValue(2, ctx -> broadcastRandom(ctx))
+        }, null);
+        */
+
+        CommandArgument randomBroadcast = new CommandArgument("-random", 1, new CommandArgument[]{
+            new CommandArgument("-action", 2, new CommandArgument[]{
+                    new CommandArgumentValue(3, (this::broadcastRandom))
+            }, null )
         }, null);
 
         CommandArgument manualBroadcast = new CommandArgument("-manual", 1, new CommandArgument[]{
@@ -43,8 +51,9 @@ public class SendGameInfoCommand extends Command {
                                         new CommandArgumentValue(9, new CommandArgument[]{
                                             new CommandArgument("-maxplayer", 10, new CommandArgument[]{
                                                 new CommandArgumentValue(11, new CommandArgument[]{
-                                                    new CommandArgument("-action", 12, new CommandArgumentValue(13, ctx -> broadcastManual(ctx))),
-                                                    new CommandArgumentValue(12, ctx -> broadcastManual(ctx))
+                                                    new CommandArgument("-action", 12, new CommandArgument[]{
+                                                        new CommandArgumentValue(13, (this::broadcastManual))
+                                                    }, null)
                                                 }, null)
                                             }, null)
                                         }, null)
@@ -63,7 +72,7 @@ public class SendGameInfoCommand extends Command {
         }, null);
 
         // -singleconnection branch
-        CommandArgument randomSingle = new CommandArgument("-random", 2, ctx -> singleRandom(ctx));
+        CommandArgument randomSingle = new CommandArgument("-random", 2, this::singleRandom);
 
         CommandArgument manualSingle = new CommandArgument("-manual", 2, new CommandArgument[]{
                 new CommandArgument("-gametype", 3, new CommandArgument[]{

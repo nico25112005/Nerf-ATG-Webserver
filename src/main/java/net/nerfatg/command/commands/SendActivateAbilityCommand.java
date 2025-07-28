@@ -21,46 +21,41 @@ public class SendActivateAbilityCommand extends Command {
     }
 
     private void init() {
-        // -help argument
         CommandArgument help = new CommandArgument("-help", 0, ctx -> printHelp());
         addArgument(help);
 
-        // -broadcast branch
         CommandArgument randomBroadcast = new CommandArgument("-random", 1, new CommandArgument[]{
-            new CommandArgument("-action", 2, new CommandArgumentValue(3, ctx -> broadcastRandom(ctx))),
-            new CommandArgumentValue(2, ctx -> broadcastRandom(ctx))
+            new CommandArgument("-action", 2, new CommandArgument[]{
+                new CommandArgumentValue(3, (this::broadcastRandom))
+            }, null)
         }, null);
 
         CommandArgument manualBroadcast = new CommandArgument("-manual", 1, new CommandArgument[]{
-            new CommandArgumentValue(2, new CommandArgument[]{
-                new CommandArgument("-action", 3, new CommandArgumentValue(4, ctx -> broadcastManual(ctx))),
-                new CommandArgumentValue(3, ctx -> broadcastManual(ctx))
+            new CommandArgument("-playerid", 2, new CommandArgument[]{
+                new CommandArgumentValue(3, new CommandArgument[]{
+                    new CommandArgument("-action", 4, new CommandArgument[]{
+                        new CommandArgumentValue(5, ctx -> broadcastManual(ctx))
+                    }, null)
+                }, null)
             }, null)
         }, null);
 
         CommandArgument broadcast = new CommandArgument("-broadcast", 0, new CommandArgument[]{
-                randomBroadcast,
-                manualBroadcast
+            randomBroadcast,
+            manualBroadcast
         }, null);
 
-        // -singleconnection branch
-        CommandArgument randomSingle = new CommandArgument("-random", 2, new CommandArgument[]{
-            new CommandArgument("-action", 3, new CommandArgumentValue(4, ctx -> singleRandom(ctx))),
-            new CommandArgumentValue(3, ctx -> singleRandom(ctx))
-        }, null);
-
+        CommandArgument randomSingle = new CommandArgument("-random", 2, ctx -> singleRandom(ctx));
         CommandArgument manualSingle = new CommandArgument("-manual", 2, new CommandArgument[]{
-                new CommandArgumentValue(3, new CommandArgument[]{
-                        new CommandArgument("-action", 4, new CommandArgumentValue(5, ctx -> singleManual(ctx))),
-                        new CommandArgumentValue(4, ctx -> singleManual(ctx))
-                }, null)
+            new CommandArgument("-playerid", 3, new CommandArgument[]{
+                new CommandArgumentValue(4, ctx -> singleManual(ctx))
+            }, null)
         }, null);
-
         CommandArgument singleConnection = new CommandArgument("-singleconnection", 0, new CommandArgument[]{
-                new CommandArgumentValue(1, new CommandArgument[]{
-                        randomSingle,
-                        manualSingle
-                }, null)
+            new CommandArgumentValue(1, new CommandArgument[]{
+                randomSingle,
+                manualSingle
+            }, null)
         }, null);
 
         addArgument(broadcast);
@@ -96,13 +91,11 @@ public class SendActivateAbilityCommand extends Command {
         }
         return PacketAction.Add;
     }
+
     private void broadcastRandom(CommandContext ctx) {
         PacketAction action = parseAction(ctx.args());
         if (action == null) return;
-        ActivateAbility packet = new ActivateAbility(
-                "player" + random.nextInt(1000),
-                action
-        );
+        ActivateAbility packet = new ActivateAbility("player" + random.nextInt(1000), action);
         proxy.broadcast(packet);
         System.out.println("Sent ActivateAbility packet to all clients: " + packet);
     }
@@ -137,10 +130,7 @@ public class SendActivateAbilityCommand extends Command {
             System.out.println("No such playerId connected: " + targetPlayer);
             return;
         }
-        ActivateAbility packet = new ActivateAbility(
-                "player" + random.nextInt(1000),
-                PacketAction.Add
-        );
+        ActivateAbility packet = new ActivateAbility("player" + random.nextInt(1000), PacketAction.Add);
         proxy.send(targetPlayer, packet);
         System.out.println("Sent ActivateAbility packet to " + targetPlayer + ": " + packet);
     }

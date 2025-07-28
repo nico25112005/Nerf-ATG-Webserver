@@ -21,23 +21,23 @@ public class SendJoinGameCommand extends Command {
     }
 
     private void init() {
-        // -help argument
         CommandArgument help = new CommandArgument("-help", 0, ctx -> printHelp());
         addArgument(help);
 
-        // -broadcast branch
         CommandArgument randomBroadcast = new CommandArgument("-random", 1, new CommandArgument[]{
-            new CommandArgument("-action", 2, new CommandArgumentValue(3, ctx -> broadcastRandom(ctx))),
-            new CommandArgumentValue(2, ctx -> broadcastRandom(ctx))
+            new CommandArgument("-action", 2, new CommandArgument[]{
+                new CommandArgumentValue(3, (this::broadcastRandom))
+            }, null)
         }, null);
 
         CommandArgument manualBroadcast = new CommandArgument("-manual", 1, new CommandArgument[]{
             new CommandArgument("-playerid", 2, new CommandArgument[]{
                 new CommandArgumentValue(3, new CommandArgument[]{
-                    new CommandArgument("-gamename", 4, new CommandArgument[]{
+                    new CommandArgument("-gameid", 4, new CommandArgument[]{
                         new CommandArgumentValue(5, new CommandArgument[]{
-                            new CommandArgument("-action", 6, new CommandArgumentValue(7, ctx -> broadcastManual(ctx))),
-                            new CommandArgumentValue(6, ctx -> broadcastManual(ctx))
+                            new CommandArgument("-action", 6, new CommandArgument[]{
+                                new CommandArgumentValue(7, ctx -> broadcastManual(ctx))
+                            }, null)
                         }, null)
                     }, null)
                 }, null)
@@ -45,31 +45,25 @@ public class SendJoinGameCommand extends Command {
         }, null);
 
         CommandArgument broadcast = new CommandArgument("-broadcast", 0, new CommandArgument[]{
-                randomBroadcast,
-                manualBroadcast
+            randomBroadcast,
+            manualBroadcast
         }, null);
 
-        // -singleconnection branch
         CommandArgument randomSingle = new CommandArgument("-random", 2, ctx -> singleRandom(ctx));
-
         CommandArgument manualSingle = new CommandArgument("-manual", 2, new CommandArgument[]{
-                new CommandArgument("-playerid", 3, new CommandArgument[]{
-                        new CommandArgumentValue(4, new CommandArgument[]{
-                                new CommandArgument("-gamename", 5, new CommandArgument[]{
-                                        new CommandArgumentValue(6, new CommandArgument[]{
-                                            new CommandArgument("-action", 7, new CommandArgumentValue(8, ctx -> singleManual(ctx))),
-                                            new CommandArgumentValue(7, ctx -> singleManual(ctx))
-                                        }, null)
-                                }, null)
-                        }, null)
+            new CommandArgument("-playerid", 3, new CommandArgument[]{
+                new CommandArgumentValue(4, new CommandArgument[]{
+                    new CommandArgument("-gameid", 5, new CommandArgument[]{
+                        new CommandArgumentValue(6, ctx -> singleManual(ctx))
+                    }, null)
                 }, null)
+            }, null)
         }, null);
-
         CommandArgument singleConnection = new CommandArgument("-singleconnection", 0, new CommandArgument[]{
-                new CommandArgumentValue(1, new CommandArgument[]{
-                        randomSingle,
-                        manualSingle
-                }, null)
+            new CommandArgumentValue(1, new CommandArgument[]{
+                randomSingle,
+                manualSingle
+            }, null)
         }, null);
 
         addArgument(broadcast);
@@ -80,16 +74,16 @@ public class SendJoinGameCommand extends Command {
         System.out.println("Usage for sendjoingame:");
         System.out.println("  sendjoingame -help");
         System.out.println("  sendjoingame -broadcast -random [-action <Generic|Add|Update|Remove|Replace>]");
-        System.out.println("  sendjoingame -broadcast -manual -playerid <id> -gamename <name> [-action <Generic|Add|Update|Remove|Replace>]");
+        System.out.println("  sendjoingame -broadcast -manual -playerid <id> -gameid <id> [-action <Generic|Add|Update|Remove|Replace>]");
         System.out.println("  sendjoingame -singleconnection <targetPlayerId> -random [-action <Generic|Add|Update|Remove|Replace>]");
-        System.out.println("  sendjoingame -singleconnection <targetPlayerId> -manual -playerid <id> -gamename <name> [-action <Generic|Add|Update|Remove|Replace>]");
+        System.out.println("  sendjoingame -singleconnection <targetPlayerId> -manual -playerid <id> -gameid <id> [-action <Generic|Add|Update|Remove|Replace>]");
         System.out.println();
         System.out.println("-broadcast: Send to all clients");
         System.out.println("-singleconnection <targetPlayerId>: Send to a specific client");
         System.out.println("-random: Use random/placeholder values");
         System.out.println("-manual: Specify all properties as named arguments");
         System.out.println("-playerid <id>: Player ID");
-        System.out.println("-gamename <name>: Game name");
+        System.out.println("-gameid <id>: Game ID");
         System.out.println("-action <Generic|Add|Update|Remove|Replace>: Packet action (optional, default: Add)");
     }
 
@@ -106,13 +100,14 @@ public class SendJoinGameCommand extends Command {
         }
         return PacketAction.Add;
     }
+
     private void broadcastRandom(CommandContext ctx) {
         PacketAction action = parseAction(ctx.args());
         if (action == null) return;
         JoinGame packet = new JoinGame(
-                "player" + random.nextInt(1000),
-                "name" + random.nextInt(1000),
-                action
+            "player" + random.nextInt(1000),
+            "game" + random.nextInt(1000),
+            action
         );
         proxy.broadcast(packet);
         System.out.println("Sent JoinGame packet to all clients: " + packet);
@@ -122,19 +117,19 @@ public class SendJoinGameCommand extends Command {
         String[] args = ctx.args();
         PacketAction action = parseAction(args);
         if (action == null) return;
-        String playerId = null, gameName = null;
+        String playerId = null, gameId = null;
         for (int i = 0; i < args.length; i++) {
             if ("-playerid".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
                 playerId = args[i + 1];
-            } else if ("-gamename".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
-                gameName = args[i + 1];
+            } else if ("-gameid".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
+                gameId = args[i + 1];
             }
         }
-        if (playerId == null || gameName == null) {
-            System.out.println("Usage: sendjoingame -broadcast -manual -playerid <id> -gamename <name> [-action <action>]");
+        if (playerId == null || gameId == null) {
+            System.out.println("Usage: sendjoingame -broadcast -manual -playerid <id> -gameid <id> [-action <action>]");
             return;
         }
-        JoinGame packet = new JoinGame(playerId, gameName, action);
+        JoinGame packet = new JoinGame(playerId, gameId, action);
         proxy.broadcast(packet);
         System.out.println("Sent JoinGame packet to all clients: " + packet);
     }
@@ -151,9 +146,9 @@ public class SendJoinGameCommand extends Command {
             return;
         }
         JoinGame packet = new JoinGame(
-                "player" + random.nextInt(1000),
-                "name" + random.nextInt(1000),
-                PacketAction.Add
+            "player" + random.nextInt(1000),
+            "game" + random.nextInt(1000),
+            PacketAction.Add
         );
         proxy.send(targetPlayer, packet);
         System.out.println("Sent JoinGame packet to " + targetPlayer + ": " + packet);
@@ -162,23 +157,23 @@ public class SendJoinGameCommand extends Command {
     private void singleManual(CommandContext ctx) {
         String[] args = ctx.args();
         String targetPlayer = args[1];
-        String playerId = null, gameName = null;
+        String playerId = null, gameId = null;
         for (int i = 0; i < args.length; i++) {
             if ("-playerid".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
                 playerId = args[i + 1];
-            } else if ("-gamename".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
-                gameName = args[i + 1];
+            } else if ("-gameid".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
+                gameId = args[i + 1];
             }
         }
         if (!proxy.getPlayerClients().containsKey(targetPlayer)) {
             System.out.println("No such playerId connected: " + targetPlayer);
             return;
         }
-        if (playerId == null || gameName == null) {
-            System.out.println("Usage: sendjoingame -singleconnection <targetPlayerId> -manual -playerid <id> -gamename <name>");
+        if (playerId == null || gameId == null) {
+            System.out.println("Usage: sendjoingame -singleconnection <targetPlayerId> -manual -playerid <id> -gameid <id>");
             return;
         }
-        JoinGame packet = new JoinGame(playerId, gameName, PacketAction.Add);
+        JoinGame packet = new JoinGame(playerId, gameId, PacketAction.Add);
         proxy.send(targetPlayer, packet);
         System.out.println("Sent JoinGame packet to " + targetPlayer + ": " + packet);
     }

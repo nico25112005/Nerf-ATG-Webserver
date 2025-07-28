@@ -22,14 +22,13 @@ public class SendCreateGameCommand extends Command {
     }
 
     private void init() {
-        // -help argument
         CommandArgument help = new CommandArgument("-help", 0, ctx -> printHelp());
         addArgument(help);
 
-        // -broadcast branch
         CommandArgument randomBroadcast = new CommandArgument("-random", 1, new CommandArgument[]{
-            new CommandArgument("-action", 2, new CommandArgumentValue(3, ctx -> broadcastRandom(ctx))),
-            new CommandArgumentValue(2, ctx -> broadcastRandom(ctx))
+            new CommandArgument("-action", 2, new CommandArgument[]{
+                new CommandArgumentValue(3, (this::broadcastRandom))
+            }, null)
         }, null);
 
         CommandArgument manualBroadcast = new CommandArgument("-manual", 1, new CommandArgument[]{
@@ -41,8 +40,9 @@ public class SendCreateGameCommand extends Command {
                                 new CommandArgumentValue(7, new CommandArgument[]{
                                     new CommandArgument("-maxplayer", 8, new CommandArgument[]{
                                         new CommandArgumentValue(9, new CommandArgument[]{
-                                            new CommandArgument("-action", 10, new CommandArgumentValue(11, ctx -> broadcastManual(ctx))),
-                                            new CommandArgumentValue(10, ctx -> broadcastManual(ctx))
+                                            new CommandArgument("-action", 10, new CommandArgument[]{
+                                                new CommandArgumentValue(11, ctx -> broadcastManual(ctx))
+                                            }, null)
                                         }, null)
                                     }, null)
                                 }, null)
@@ -54,36 +54,33 @@ public class SendCreateGameCommand extends Command {
         }, null);
 
         CommandArgument broadcast = new CommandArgument("-broadcast", 0, new CommandArgument[]{
-                randomBroadcast,
-                manualBroadcast
+            randomBroadcast,
+            manualBroadcast
         }, null);
 
-        // -singleconnection branch
         CommandArgument randomSingle = new CommandArgument("-random", 2, ctx -> singleRandom(ctx));
-
         CommandArgument manualSingle = new CommandArgument("-manual", 2, new CommandArgument[]{
-                new CommandArgument("-playerid", 3, new CommandArgument[]{
-                        new CommandArgumentValue(4, new CommandArgument[]{
-                                new CommandArgument("-gametype", 5, new CommandArgument[]{
-                                        new CommandArgumentValue(6, new CommandArgument[]{
-                                                new CommandArgument("-gamename", 7, new CommandArgument[]{
-                                                        new CommandArgumentValue(8, new CommandArgument[]{
-                                                                new CommandArgument("-maxplayer", 9, new CommandArgument[]{
-                                                                        new CommandArgumentValue(10, ctx -> singleManual(ctx))
-                                                                }, null)
-                                                        }, null)
-                                                }, null)
-                                        }, null)
+            new CommandArgument("-playerid", 3, new CommandArgument[]{
+                new CommandArgumentValue(4, new CommandArgument[]{
+                    new CommandArgument("-gametype", 5, new CommandArgument[]{
+                        new CommandArgumentValue(6, new CommandArgument[]{
+                            new CommandArgument("-gamename", 7, new CommandArgument[]{
+                                new CommandArgumentValue(8, new CommandArgument[]{
+                                    new CommandArgument("-maxplayer", 9, new CommandArgument[]{
+                                        new CommandArgumentValue(10, ctx -> singleManual(ctx))
+                                    }, null)
                                 }, null)
+                            }, null)
                         }, null)
+                    }, null)
                 }, null)
+            }, null)
         }, null);
-
         CommandArgument singleConnection = new CommandArgument("-singleconnection", 0, new CommandArgument[]{
-                new CommandArgumentValue(1, new CommandArgument[]{
-                        randomSingle,
-                        manualSingle
-                }, null)
+            new CommandArgumentValue(1, new CommandArgument[]{
+                randomSingle,
+                manualSingle
+            }, null)
         }, null);
 
         addArgument(broadcast);
@@ -122,15 +119,16 @@ public class SendCreateGameCommand extends Command {
         }
         return PacketAction.Add;
     }
+
     private void broadcastRandom(CommandContext ctx) {
         PacketAction action = parseAction(ctx.args());
         if (action == null) return;
         CreateGame packet = new CreateGame(
-                "player" + random.nextInt(1000),
-                GameType.values()[random.nextInt(GameType.values().length)],
-                "name" + random.nextInt(1000),
-                (byte) (1 + random.nextInt(10)),
-                action
+            "player" + random.nextInt(1000),
+            GameType.values()[random.nextInt(GameType.values().length)],
+            "game" + random.nextInt(1000),
+            (byte) (1 + random.nextInt(10)),
+            action
         );
         proxy.broadcast(packet);
         System.out.println("Sent CreateGame packet to all clients: " + packet);
@@ -185,11 +183,11 @@ public class SendCreateGameCommand extends Command {
             return;
         }
         CreateGame packet = new CreateGame(
-                "player" + random.nextInt(1000),
-                GameType.values()[random.nextInt(GameType.values().length)],
-                "name" + random.nextInt(1000),
-                (byte) (1 + random.nextInt(10)),
-                PacketAction.Add
+            "player" + random.nextInt(1000),
+            GameType.values()[random.nextInt(GameType.values().length)],
+            "game" + random.nextInt(1000),
+            (byte) (1 + random.nextInt(10)),
+            PacketAction.Add
         );
         proxy.send(targetPlayer, packet);
         System.out.println("Sent CreateGame packet to " + targetPlayer + ": " + packet);

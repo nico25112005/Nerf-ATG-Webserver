@@ -21,27 +21,31 @@ public class SendGameStartedCommand extends Command {
     }
 
     private void init() {
-        // -help argument
         CommandArgument help = new CommandArgument("-help", 0, ctx -> printHelp());
         addArgument(help);
 
-        // -broadcast branch
         CommandArgument randomBroadcast = new CommandArgument("-random", 1, new CommandArgument[]{
-            new CommandArgument("-action", 2, new CommandArgumentValue(3, ctx -> broadcastRandom(ctx))),
-            new CommandArgumentValue(2, ctx -> broadcastRandom(ctx))
+            new CommandArgument("-action", 2, new CommandArgument[]{
+                new CommandArgumentValue(3, (this::broadcastRandom))
+            }, null)
         }, null);
 
         CommandArgument manualBroadcast = new CommandArgument("-manual", 1, new CommandArgument[]{
-            new CommandArgument("-leaderid", 2, new CommandArgument[]{
+            new CommandArgument("-playerid", 2, new CommandArgument[]{
                 new CommandArgumentValue(3, new CommandArgument[]{
-                    new CommandArgument("-leadername", 4, new CommandArgument[]{
+                    new CommandArgument("-leaderid", 4, new CommandArgument[]{
                         new CommandArgumentValue(5, new CommandArgument[]{
-                            new CommandArgument("-teamindex", 6, new CommandArgument[]{
+                            new CommandArgument("-leadername", 6, new CommandArgument[]{
                                 new CommandArgumentValue(7, new CommandArgument[]{
-                                    new CommandArgument("-playercount", 8, new CommandArgument[]{
+                                    new CommandArgument("-teamindex", 8, new CommandArgument[]{
                                         new CommandArgumentValue(9, new CommandArgument[]{
-                                            new CommandArgument("-action", 10, new CommandArgumentValue(11, ctx -> broadcastManual(ctx))),
-                                            new CommandArgumentValue(10, ctx -> broadcastManual(ctx))
+                                            new CommandArgument("-playercount", 10, new CommandArgument[]{
+                                                new CommandArgumentValue(11, new CommandArgument[]{
+                                                    new CommandArgument("-action", 12, new CommandArgument[]{
+                                                        new CommandArgumentValue(13, ctx -> broadcastManual(ctx))
+                                                    }, null)
+                                                }, null)
+                                            }, null)
                                         }, null)
                                     }, null)
                                 }, null)
@@ -53,36 +57,37 @@ public class SendGameStartedCommand extends Command {
         }, null);
 
         CommandArgument broadcast = new CommandArgument("-broadcast", 0, new CommandArgument[]{
-                randomBroadcast,
-                manualBroadcast
+            randomBroadcast,
+            manualBroadcast
         }, null);
 
-        // -singleconnection branch
         CommandArgument randomSingle = new CommandArgument("-random", 2, ctx -> singleRandom(ctx));
-
         CommandArgument manualSingle = new CommandArgument("-manual", 2, new CommandArgument[]{
-                new CommandArgument("-leaderid", 3, new CommandArgument[]{
-                        new CommandArgumentValue(4, new CommandArgument[]{
-                                new CommandArgument("-leadername", 5, new CommandArgument[]{
-                                        new CommandArgumentValue(6, new CommandArgument[]{
-                                                new CommandArgument("-teamindex", 7, new CommandArgument[]{
-                                                        new CommandArgumentValue(8, new CommandArgument[]{
-                                                                new CommandArgument("-playercount", 9, new CommandArgument[]{
-                                                                        new CommandArgumentValue(10, ctx -> singleManual(ctx))
-                                                                }, null)
-                                                        }, null)
-                                                }, null)
+            new CommandArgument("-playerid", 3, new CommandArgument[]{
+                new CommandArgumentValue(4, new CommandArgument[]{
+                    new CommandArgument("-leaderid", 5, new CommandArgument[]{
+                        new CommandArgumentValue(6, new CommandArgument[]{
+                            new CommandArgument("-leadername", 7, new CommandArgument[]{
+                                new CommandArgumentValue(8, new CommandArgument[]{
+                                    new CommandArgument("-teamindex", 9, new CommandArgument[]{
+                                        new CommandArgumentValue(10, new CommandArgument[]{
+                                            new CommandArgument("-playercount", 11, new CommandArgument[]{
+                                                new CommandArgumentValue(12, ctx -> singleManual(ctx))
+                                            }, null)
                                         }, null)
+                                    }, null)
                                 }, null)
+                            }, null)
                         }, null)
+                    }, null)
                 }, null)
+            }, null)
         }, null);
-
         CommandArgument singleConnection = new CommandArgument("-singleconnection", 0, new CommandArgument[]{
-                new CommandArgumentValue(1, new CommandArgument[]{
-                        randomSingle,
-                        manualSingle
-                }, null)
+            new CommandArgumentValue(1, new CommandArgument[]{
+                randomSingle,
+                manualSingle
+            }, null)
         }, null);
 
         addArgument(broadcast);
@@ -93,14 +98,15 @@ public class SendGameStartedCommand extends Command {
         System.out.println("Usage for sendgamestarted:");
         System.out.println("  sendgamestarted -help");
         System.out.println("  sendgamestarted -broadcast -random [-action <Generic|Add|Update|Remove|Replace>]");
-        System.out.println("  sendgamestarted -broadcast -manual -leaderid <id> -leadername <name> -teamindex <byte> -playercount <byte> [-action <Generic|Add|Update|Remove|Replace>]");
+        System.out.println("  sendgamestarted -broadcast -manual -playerid <id> -leaderid <id> -leadername <name> -teamindex <byte> -playercount <byte> [-action <Generic|Add|Update|Remove|Replace>]");
         System.out.println("  sendgamestarted -singleconnection <targetPlayerId> -random [-action <Generic|Add|Update|Remove|Replace>]");
-        System.out.println("  sendgamestarted -singleconnection <targetPlayerId> -manual -leaderid <id> -leadername <name> -teamindex <byte> -playercount <byte> [-action <Generic|Add|Update|Remove|Replace>]");
+        System.out.println("  sendgamestarted -singleconnection <targetPlayerId> -manual -playerid <id> -leaderid <id> -leadername <name> -teamindex <byte> -playercount <byte> [-action <Generic|Add|Update|Remove|Replace>]");
         System.out.println();
         System.out.println("-broadcast: Send to all clients");
         System.out.println("-singleconnection <targetPlayerId>: Send to a specific client");
         System.out.println("-random: Use random/placeholder values");
         System.out.println("-manual: Specify all properties as named arguments");
+        System.out.println("-playerid <id>: Player ID");
         System.out.println("-leaderid <id>: Leader ID");
         System.out.println("-leadername <name>: Leader name");
         System.out.println("-teamindex <byte>: Team index");
@@ -121,16 +127,17 @@ public class SendGameStartedCommand extends Command {
         }
         return PacketAction.Add;
     }
+
     private void broadcastRandom(CommandContext ctx) {
         PacketAction action = parseAction(ctx.args());
         if (action == null) return;
         GameStarted packet = new GameStarted(
-                "player" + random.nextInt(1000),
-                "leader" + random.nextInt(1000),
-                "name" + random.nextInt(1000),
-                (byte) random.nextInt(10),
-                (byte) random.nextInt(10),
-                action
+            "player" + random.nextInt(1000),
+            "leader" + random.nextInt(1000),
+            "name" + random.nextInt(1000),
+            (byte) random.nextInt(2),
+            (byte) (1 + random.nextInt(10)),
+            action
         );
         proxy.broadcast(packet);
         System.out.println("Sent GameStarted packet to all clients: " + packet);
@@ -140,10 +147,12 @@ public class SendGameStartedCommand extends Command {
         String[] args = ctx.args();
         PacketAction action = parseAction(args);
         if (action == null) return;
-        String leaderId = null, leaderName = null;
+        String playerId = null, leaderId = null, leaderName = null;
         Byte teamIndex = null, playerCount = null;
         for (int i = 0; i < args.length; i++) {
-            if ("-leaderid".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
+            if ("-playerid".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
+                playerId = args[i + 1];
+            } else if ("-leaderid".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
                 leaderId = args[i + 1];
             } else if ("-leadername".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
                 leaderName = args[i + 1];
@@ -151,23 +160,23 @@ public class SendGameStartedCommand extends Command {
                 try {
                     teamIndex = Byte.parseByte(args[i + 1]);
                 } catch (NumberFormatException e) {
-                    System.out.println("teamindex must be a number");
+                    System.out.println("teamindex must be a byte");
                     return;
                 }
             } else if ("-playercount".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
                 try {
                     playerCount = Byte.parseByte(args[i + 1]);
                 } catch (NumberFormatException e) {
-                    System.out.println("playercount must be a number");
+                    System.out.println("playercount must be a byte");
                     return;
                 }
             }
         }
-        if (leaderId == null || leaderName == null || teamIndex == null || playerCount == null) {
-            System.out.println("Usage: sendgamestarted -broadcast -manual -leaderid <id> -leadername <name> -teamindex <byte> -playercount <byte> [-action <action>]");
+        if (playerId == null || leaderId == null || leaderName == null || teamIndex == null || playerCount == null) {
+            System.out.println("Usage: sendgamestarted -broadcast -manual -playerid <id> -leaderid <id> -leadername <name> -teamindex <byte> -playercount <byte> [-action <action>]");
             return;
         }
-        GameStarted packet = new GameStarted(leaderId, leaderId, leaderName, teamIndex, playerCount, action);
+        GameStarted packet = new GameStarted(playerId, leaderId, leaderName, teamIndex, playerCount, action);
         proxy.broadcast(packet);
         System.out.println("Sent GameStarted packet to all clients: " + packet);
     }
@@ -184,12 +193,12 @@ public class SendGameStartedCommand extends Command {
             return;
         }
         GameStarted packet = new GameStarted(
-                "player" + random.nextInt(1000),
-                "leader" + random.nextInt(1000),
-                "name" + random.nextInt(1000),
-                (byte) random.nextInt(10),
-                (byte) random.nextInt(10),
-                PacketAction.Add
+            "player" + random.nextInt(1000),
+            "leader" + random.nextInt(1000),
+            "name" + random.nextInt(1000),
+            (byte) random.nextInt(2),
+            (byte) (1 + random.nextInt(10)),
+            PacketAction.Add
         );
         proxy.send(targetPlayer, packet);
         System.out.println("Sent GameStarted packet to " + targetPlayer + ": " + packet);
@@ -198,10 +207,12 @@ public class SendGameStartedCommand extends Command {
     private void singleManual(CommandContext ctx) {
         String[] args = ctx.args();
         String targetPlayer = args[1];
-        String leaderId = null, leaderName = null;
+        String playerId = null, leaderId = null, leaderName = null;
         Byte teamIndex = null, playerCount = null;
         for (int i = 0; i < args.length; i++) {
-            if ("-leaderid".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
+            if ("-playerid".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
+                playerId = args[i + 1];
+            } else if ("-leaderid".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
                 leaderId = args[i + 1];
             } else if ("-leadername".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
                 leaderName = args[i + 1];
@@ -209,14 +220,14 @@ public class SendGameStartedCommand extends Command {
                 try {
                     teamIndex = Byte.parseByte(args[i + 1]);
                 } catch (NumberFormatException e) {
-                    System.out.println("teamindex must be a number");
+                    System.out.println("teamindex must be a byte");
                     return;
                 }
             } else if ("-playercount".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
                 try {
                     playerCount = Byte.parseByte(args[i + 1]);
                 } catch (NumberFormatException e) {
-                    System.out.println("playercount must be a number");
+                    System.out.println("playercount must be a byte");
                     return;
                 }
             }
@@ -225,11 +236,11 @@ public class SendGameStartedCommand extends Command {
             System.out.println("No such playerId connected: " + targetPlayer);
             return;
         }
-        if (leaderId == null || leaderName == null || teamIndex == null || playerCount == null) {
-            System.out.println("Usage: sendgamestarted -singleconnection <targetPlayerId> -manual -leaderid <id> -leadername <name> -teamindex <byte> -playercount <byte>");
+        if (playerId == null || leaderId == null || leaderName == null || teamIndex == null || playerCount == null) {
+            System.out.println("Usage: sendgamestarted -singleconnection <targetPlayerId> -manual -playerid <id> -leaderid <id> -leadername <name> -teamindex <byte> -playercount <byte>");
             return;
         }
-        GameStarted packet = new GameStarted(leaderId, leaderId, leaderName, teamIndex, playerCount, PacketAction.Add);
+        GameStarted packet = new GameStarted(playerId, leaderId, leaderName, teamIndex, playerCount, PacketAction.Add);
         proxy.send(targetPlayer, packet);
         System.out.println("Sent GameStarted packet to " + targetPlayer + ": " + packet);
     }

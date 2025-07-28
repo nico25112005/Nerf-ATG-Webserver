@@ -21,14 +21,13 @@ public class SendMapPointCommand extends Command {
     }
 
     private void init() {
-        // -help argument
         CommandArgument help = new CommandArgument("-help", 0, ctx -> printHelp());
         addArgument(help);
 
-        // -broadcast branch
         CommandArgument randomBroadcast = new CommandArgument("-random", 1, new CommandArgument[]{
-            new CommandArgument("-action", 2, new CommandArgumentValue(3, ctx -> broadcastRandom(ctx))),
-            new CommandArgumentValue(2, ctx -> broadcastRandom(ctx))
+            new CommandArgument("-action", 2, new CommandArgument[]{
+                new CommandArgumentValue(3, (this::broadcastRandom))
+            }, null)
         }, null);
 
         CommandArgument manualBroadcast = new CommandArgument("-manual", 1, new CommandArgument[]{
@@ -40,8 +39,9 @@ public class SendMapPointCommand extends Command {
                                 new CommandArgumentValue(7, new CommandArgument[]{
                                     new CommandArgument("-latitude", 8, new CommandArgument[]{
                                         new CommandArgumentValue(9, new CommandArgument[]{
-                                            new CommandArgument("-action", 10, new CommandArgumentValue(11, ctx -> broadcastManual(ctx))),
-                                            new CommandArgumentValue(10, ctx -> broadcastManual(ctx))
+                                            new CommandArgument("-action", 10, new CommandArgument[]{
+                                                new CommandArgumentValue(11, ctx -> broadcastManual(ctx))
+                                            }, null)
                                         }, null)
                                     }, null)
                                 }, null)
@@ -53,36 +53,33 @@ public class SendMapPointCommand extends Command {
         }, null);
 
         CommandArgument broadcast = new CommandArgument("-broadcast", 0, new CommandArgument[]{
-                randomBroadcast,
-                manualBroadcast
+            randomBroadcast,
+            manualBroadcast
         }, null);
 
-        // -singleconnection branch
         CommandArgument randomSingle = new CommandArgument("-random", 2, ctx -> singleRandom(ctx));
-
         CommandArgument manualSingle = new CommandArgument("-manual", 2, new CommandArgument[]{
-                new CommandArgument("-name", 3, new CommandArgument[]{
-                        new CommandArgumentValue(4, new CommandArgument[]{
-                                new CommandArgument("-index", 5, new CommandArgument[]{
-                                        new CommandArgumentValue(6, new CommandArgument[]{
-                                                new CommandArgument("-longitude", 7, new CommandArgument[]{
-                                                        new CommandArgumentValue(8, new CommandArgument[]{
-                                                                new CommandArgument("-latitude", 9, new CommandArgument[]{
-                                                                        new CommandArgumentValue(10, ctx -> singleManual(ctx))
-                                                                }, null)
-                                                        }, null)
-                                                }, null)
-                                        }, null)
+            new CommandArgument("-name", 3, new CommandArgument[]{
+                new CommandArgumentValue(4, new CommandArgument[]{
+                    new CommandArgument("-index", 5, new CommandArgument[]{
+                        new CommandArgumentValue(6, new CommandArgument[]{
+                            new CommandArgument("-longitude", 7, new CommandArgument[]{
+                                new CommandArgumentValue(8, new CommandArgument[]{
+                                    new CommandArgument("-latitude", 9, new CommandArgument[]{
+                                        new CommandArgumentValue(10, ctx -> singleManual(ctx))
+                                    }, null)
                                 }, null)
+                            }, null)
                         }, null)
+                    }, null)
                 }, null)
+            }, null)
         }, null);
-
         CommandArgument singleConnection = new CommandArgument("-singleconnection", 0, new CommandArgument[]{
-                new CommandArgumentValue(1, new CommandArgument[]{
-                        randomSingle,
-                        manualSingle
-                }, null)
+            new CommandArgumentValue(1, new CommandArgument[]{
+                randomSingle,
+                manualSingle
+            }, null)
         }, null);
 
         addArgument(broadcast);
@@ -101,8 +98,8 @@ public class SendMapPointCommand extends Command {
         System.out.println("-singleconnection <targetPlayerId>: Send to a specific client");
         System.out.println("-random: Use random/placeholder values");
         System.out.println("-manual: Specify all properties as named arguments");
-        System.out.println("-name <name>: Name of the map point");
-        System.out.println("-index <byte>: Index value");
+        System.out.println("-name <name>: Name");
+        System.out.println("-index <byte>: Index");
         System.out.println("-longitude <double>: Longitude");
         System.out.println("-latitude <double>: Latitude");
         System.out.println("-action <Generic|Add|Update|Remove|Replace>: Packet action (optional, default: Add)");
@@ -121,15 +118,16 @@ public class SendMapPointCommand extends Command {
         }
         return PacketAction.Add;
     }
+
     private void broadcastRandom(CommandContext ctx) {
         PacketAction action = parseAction(ctx.args());
         if (action == null) return;
         MapPoint packet = new MapPoint(
-                "name" + random.nextInt(1000),
-                (byte) random.nextInt(10),
-                random.nextDouble() * 180 - 90,
-                random.nextDouble() * 360 - 180,
-                action
+            "name" + random.nextInt(1000),
+            (byte) random.nextInt(2),
+            random.nextDouble() * 180 - 90,
+            random.nextDouble() * 360 - 180,
+            action
         );
         proxy.broadcast(packet);
         System.out.println("Sent MapPoint packet to all clients: " + packet);
@@ -149,21 +147,21 @@ public class SendMapPointCommand extends Command {
                 try {
                     index = Byte.parseByte(args[i + 1]);
                 } catch (NumberFormatException e) {
-                    System.out.println("index must be a number");
+                    System.out.println("index must be a byte");
                     return;
                 }
             } else if ("-longitude".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
                 try {
                     longitude = Double.parseDouble(args[i + 1]);
                 } catch (NumberFormatException e) {
-                    System.out.println("longitude must be a number");
+                    System.out.println("longitude must be a double");
                     return;
                 }
             } else if ("-latitude".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
                 try {
                     latitude = Double.parseDouble(args[i + 1]);
                 } catch (NumberFormatException e) {
-                    System.out.println("latitude must be a number");
+                    System.out.println("latitude must be a double");
                     return;
                 }
             }
@@ -189,11 +187,11 @@ public class SendMapPointCommand extends Command {
             return;
         }
         MapPoint packet = new MapPoint(
-                "name" + random.nextInt(1000),
-                (byte) random.nextInt(10),
-                random.nextDouble() * 180 - 90,
-                random.nextDouble() * 360 - 180,
-                PacketAction.Add
+            "name" + random.nextInt(1000),
+            (byte) random.nextInt(2),
+            random.nextDouble() * 180 - 90,
+            random.nextDouble() * 360 - 180,
+            PacketAction.Add
         );
         proxy.send(targetPlayer, packet);
         System.out.println("Sent MapPoint packet to " + targetPlayer + ": " + packet);
@@ -212,21 +210,21 @@ public class SendMapPointCommand extends Command {
                 try {
                     index = Byte.parseByte(args[i + 1]);
                 } catch (NumberFormatException e) {
-                    System.out.println("index must be a number");
+                    System.out.println("index must be a byte");
                     return;
                 }
             } else if ("-longitude".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
                 try {
                     longitude = Double.parseDouble(args[i + 1]);
                 } catch (NumberFormatException e) {
-                    System.out.println("longitude must be a number");
+                    System.out.println("longitude must be a double");
                     return;
                 }
             } else if ("-latitude".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
                 try {
                     latitude = Double.parseDouble(args[i + 1]);
                 } catch (NumberFormatException e) {
-                    System.out.println("latitude must be a number");
+                    System.out.println("latitude must be a double");
                     return;
                 }
             }

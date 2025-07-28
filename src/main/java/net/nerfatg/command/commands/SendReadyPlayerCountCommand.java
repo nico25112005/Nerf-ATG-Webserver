@@ -21,44 +21,41 @@ public class SendReadyPlayerCountCommand extends Command {
     }
 
     private void init() {
-        // -help argument
         CommandArgument help = new CommandArgument("-help", 0, ctx -> printHelp());
         addArgument(help);
 
-        // -broadcast branch
         CommandArgument randomBroadcast = new CommandArgument("-random", 1, new CommandArgument[]{
-            new CommandArgument("-action", 2, new CommandArgumentValue(3, ctx -> broadcastRandom(ctx))),
-            new CommandArgumentValue(2, ctx -> broadcastRandom(ctx))
+            new CommandArgument("-action", 2, new CommandArgument[]{
+                new CommandArgumentValue(3, (this::broadcastRandom))
+            }, null)
         }, null);
 
         CommandArgument manualBroadcast = new CommandArgument("-manual", 1, new CommandArgument[]{
             new CommandArgument("-readyplayers", 2, new CommandArgument[]{
                 new CommandArgumentValue(3, new CommandArgument[]{
-                    new CommandArgument("-action", 4, new CommandArgumentValue(5, ctx -> broadcastManual(ctx))),
-                    new CommandArgumentValue(4, ctx -> broadcastManual(ctx))
+                    new CommandArgument("-action", 4, new CommandArgument[]{
+                        new CommandArgumentValue(5, ctx -> broadcastManual(ctx))
+                    }, null)
                 }, null)
             }, null)
         }, null);
 
         CommandArgument broadcast = new CommandArgument("-broadcast", 0, new CommandArgument[]{
-                randomBroadcast,
-                manualBroadcast
+            randomBroadcast,
+            manualBroadcast
         }, null);
 
-        // -singleconnection branch
         CommandArgument randomSingle = new CommandArgument("-random", 2, ctx -> singleRandom(ctx));
-
         CommandArgument manualSingle = new CommandArgument("-manual", 2, new CommandArgument[]{
-                new CommandArgument("-readyplayers", 3, new CommandArgument[]{
-                        new CommandArgumentValue(4, ctx -> singleManual(ctx))
-                }, null)
+            new CommandArgument("-readyplayers", 3, new CommandArgument[]{
+                new CommandArgumentValue(4, ctx -> singleManual(ctx))
+            }, null)
         }, null);
-
         CommandArgument singleConnection = new CommandArgument("-singleconnection", 0, new CommandArgument[]{
-                new CommandArgumentValue(1, new CommandArgument[]{
-                        randomSingle,
-                        manualSingle
-                }, null)
+            new CommandArgumentValue(1, new CommandArgument[]{
+                randomSingle,
+                manualSingle
+            }, null)
         }, null);
 
         addArgument(broadcast);
@@ -77,7 +74,7 @@ public class SendReadyPlayerCountCommand extends Command {
         System.out.println("-singleconnection <targetPlayerId>: Send to a specific client");
         System.out.println("-random: Use random/placeholder values");
         System.out.println("-manual: Specify all properties as named arguments");
-        System.out.println("-readyplayers <byte>: Number of ready players");
+        System.out.println("-readyplayers <byte>: Ready player count");
         System.out.println("-action <Generic|Add|Update|Remove|Replace>: Packet action (optional, default: Add)");
     }
 
@@ -94,13 +91,11 @@ public class SendReadyPlayerCountCommand extends Command {
         }
         return PacketAction.Add;
     }
+
     private void broadcastRandom(CommandContext ctx) {
         PacketAction action = parseAction(ctx.args());
         if (action == null) return;
-        ReadyPlayerCount packet = new ReadyPlayerCount(
-                (byte) random.nextInt(10),
-                action
-        );
+        ReadyPlayerCount packet = new ReadyPlayerCount((byte) random.nextInt(10), action);
         proxy.broadcast(packet);
         System.out.println("Sent ReadyPlayerCount packet to all clients: " + packet);
     }
@@ -115,7 +110,7 @@ public class SendReadyPlayerCountCommand extends Command {
                 try {
                     readyPlayers = Byte.parseByte(args[i + 1]);
                 } catch (NumberFormatException e) {
-                    System.out.println("readyplayers must be a number");
+                    System.out.println("readyplayers must be a byte");
                     return;
                 }
             }
@@ -140,10 +135,7 @@ public class SendReadyPlayerCountCommand extends Command {
             System.out.println("No such playerId connected: " + targetPlayer);
             return;
         }
-        ReadyPlayerCount packet = new ReadyPlayerCount(
-                (byte) random.nextInt(10),
-                PacketAction.Add
-        );
+        ReadyPlayerCount packet = new ReadyPlayerCount((byte) random.nextInt(10), PacketAction.Add);
         proxy.send(targetPlayer, packet);
         System.out.println("Sent ReadyPlayerCount packet to " + targetPlayer + ": " + packet);
     }
@@ -157,7 +149,7 @@ public class SendReadyPlayerCountCommand extends Command {
                 try {
                     readyPlayers = Byte.parseByte(args[i + 1]);
                 } catch (NumberFormatException e) {
-                    System.out.println("readyplayers must be a number");
+                    System.out.println("readyplayers must be a byte");
                     return;
                 }
             }
