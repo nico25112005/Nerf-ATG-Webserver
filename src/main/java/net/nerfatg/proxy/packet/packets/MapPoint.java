@@ -6,6 +6,7 @@ import net.nerfatg.proxy.packet.PacketType;
 
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 
 public class MapPoint extends Packet {
@@ -29,6 +30,8 @@ public class MapPoint extends Packet {
     @Override
     public void readPayload(ByteBuffer buffer, int offset) throws BufferOverflowException {
         buffer.position(offset);
+        buffer.order(ByteOrder.LITTLE_ENDIAN);
+
         byte[] nameBytes = new byte[12];
         buffer.get(nameBytes);
         this.name = new String(nameBytes, StandardCharsets.UTF_8).trim().replace("\0", "");
@@ -40,7 +43,8 @@ public class MapPoint extends Packet {
     @Override
     public void writePayload(ByteBuffer buffer, int offset) throws BufferOverflowException {
         buffer.position(offset);
-        
+        buffer.order(ByteOrder.LITTLE_ENDIAN);
+
         // Write name (12 bytes fixed)
         byte[] originalNameBytes = name.getBytes(StandardCharsets.UTF_8);
         buffer.put(originalNameBytes, 0, Math.min(originalNameBytes.length, 12));

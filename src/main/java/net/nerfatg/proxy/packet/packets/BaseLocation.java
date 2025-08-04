@@ -6,6 +6,7 @@ import net.nerfatg.proxy.packet.PacketType;
 
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 public class BaseLocation extends Packet {
 
@@ -28,6 +29,7 @@ public class BaseLocation extends Packet {
     @Override
     public void readPayload(ByteBuffer buffer, int offset) throws BufferOverflowException {
         buffer.position(offset);
+        buffer.order(ByteOrder.LITTLE_ENDIAN);
         this.teamIndex = buffer.get();
         this.longitude = buffer.getDouble();
         this.latitude = buffer.getDouble();
@@ -36,6 +38,7 @@ public class BaseLocation extends Packet {
     @Override
     public void writePayload(ByteBuffer buffer, int offset) throws BufferOverflowException {
         buffer.position(offset);
+        buffer.order(ByteOrder.LITTLE_ENDIAN);
         buffer.put(teamIndex);
         buffer.putDouble(longitude);
         buffer.putDouble(latitude);

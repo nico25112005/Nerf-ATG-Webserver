@@ -30,7 +30,7 @@ public class BroadcastCommand extends Command {
     private void broadcastMessage(CommandContext ctx) {
         String message = ctx.args()[0];
 
-        GameStarted packet = new GameStarted("AAAAAAAA",
+        GameStarted packet = new GameStarted(
                 "BBBBBBBB", "Gotzi", (byte) 0, (byte) 5, PacketAction.Generic);
 
         server.getProxy().broadcast(

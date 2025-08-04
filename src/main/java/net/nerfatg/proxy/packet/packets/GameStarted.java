@@ -18,7 +18,7 @@ public class GameStarted extends Packet {
         super(buffer);
     }
 
-    public GameStarted(String playerId, String leaderId, String leaderName, byte teamIndex, byte playerCount, PacketAction action) {
+    public GameStarted(String leaderId, String leaderName, byte teamIndex, byte playerCount, PacketAction action) {
         super(PacketType.GameStarted, action);
 
         this.leaderId = leaderId;
@@ -37,7 +37,8 @@ public class GameStarted extends Packet {
         byte[] leaderNameBytes = new byte[12];
         buffer.get(leaderNameBytes);
         this.leaderName = new String(leaderNameBytes, java.nio.charset.StandardCharsets.UTF_8).trim().replace("\0", "");
-        
+
+        this.teamIndex = buffer.get();
         this.playerCount = buffer.get();
     }
 
@@ -58,7 +59,8 @@ public class GameStarted extends Packet {
         if (originalLeaderNameBytes.length < 12) {
             buffer.put(new byte[12 - originalLeaderNameBytes.length]); // pad with zeros
         }
-        
+
+        buffer.put(teamIndex);
         buffer.put(playerCount);
     }
 

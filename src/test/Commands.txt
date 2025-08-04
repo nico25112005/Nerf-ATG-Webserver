@@ -1,0 +1,12 @@
+sendgameinfo -broadcast -manual -gametype Team -gameid 12345678 -gamename TestGame -playercount 0 -maxplayer 16 -action Add
+sendplayerinfo -broadcast -manual -playerid 1234 -name Nico -index 0 -action Add
+sendplayerinfo -broadcast -manual -playerid 2345 -name Timo -index 1 -action Add
+sendgamestarted -broadcast -manual -playerid 0 -leaderid 2345 -leadername Timo -teamindex 1 -playercount 2 -action Generic
+sendgamestarted -broadcast -manual -playerid 0 -leaderid 1234 -leadername Nico -teamindex 0 -playercount 2 -action Generic
+sendreadyplayercount -broadcast -manual -readyplayers 1 -action Generic
+sendreadyplayercount -broadcast -manual -readyplayers 2 -action Generic
+sendbaselocation -broadcast -manual -teamindex 0 -longitude 44.543113 -latitude 14.879421 -action Generic
+sendbaselocation -broadcast -manual -teamindex 1 -longitude 44.544113 -latitude 14.879421 -action Generic
+
+
+

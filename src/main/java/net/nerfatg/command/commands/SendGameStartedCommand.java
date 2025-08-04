@@ -132,7 +132,6 @@ public class SendGameStartedCommand extends Command {
         PacketAction action = parseAction(ctx.args());
         if (action == null) return;
         GameStarted packet = new GameStarted(
-            "player" + random.nextInt(1000),
             "leader" + random.nextInt(1000),
             "name" + random.nextInt(1000),
             (byte) random.nextInt(2),
@@ -147,12 +146,10 @@ public class SendGameStartedCommand extends Command {
         String[] args = ctx.args();
         PacketAction action = parseAction(args);
         if (action == null) return;
-        String playerId = null, leaderId = null, leaderName = null;
+        String leaderId = null, leaderName = null;
         Byte teamIndex = null, playerCount = null;
         for (int i = 0; i < args.length; i++) {
-            if ("-playerid".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
-                playerId = args[i + 1];
-            } else if ("-leaderid".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
+            if ("-leaderid".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
                 leaderId = args[i + 1];
             } else if ("-leadername".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
                 leaderName = args[i + 1];
@@ -172,11 +169,11 @@ public class SendGameStartedCommand extends Command {
                 }
             }
         }
-        if (playerId == null || leaderId == null || leaderName == null || teamIndex == null || playerCount == null) {
+        if (leaderId == null || leaderName == null || teamIndex == null || playerCount == null) {
             System.out.println("Usage: sendgamestarted -broadcast -manual -playerid <id> -leaderid <id> -leadername <name> -teamindex <byte> -playercount <byte> [-action <action>]");
             return;
         }
-        GameStarted packet = new GameStarted(playerId, leaderId, leaderName, teamIndex, playerCount, action);
+        GameStarted packet = new GameStarted(leaderId, leaderName, teamIndex, playerCount, action);
         proxy.broadcast(packet);
         System.out.println("Sent GameStarted packet to all clients: " + packet);
     }
@@ -193,7 +190,6 @@ public class SendGameStartedCommand extends Command {
             return;
         }
         GameStarted packet = new GameStarted(
-            "player" + random.nextInt(1000),
             "leader" + random.nextInt(1000),
             "name" + random.nextInt(1000),
             (byte) random.nextInt(2),
@@ -207,12 +203,10 @@ public class SendGameStartedCommand extends Command {
     private void singleManual(CommandContext ctx) {
         String[] args = ctx.args();
         String targetPlayer = args[1];
-        String playerId = null, leaderId = null, leaderName = null;
+        String leaderId = null, leaderName = null;
         Byte teamIndex = null, playerCount = null;
         for (int i = 0; i < args.length; i++) {
-            if ("-playerid".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
-                playerId = args[i + 1];
-            } else if ("-leaderid".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
+            if ("-leaderid".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
                 leaderId = args[i + 1];
             } else if ("-leadername".equalsIgnoreCase(args[i]) && i + 1 < args.length) {
                 leaderName = args[i + 1];
@@ -236,11 +230,11 @@ public class SendGameStartedCommand extends Command {
             System.out.println("No such playerId connected: " + targetPlayer);
             return;
         }
-        if (playerId == null || leaderId == null || leaderName == null || teamIndex == null || playerCount == null) {
+        if (leaderId == null || leaderName == null || teamIndex == null || playerCount == null) {
             System.out.println("Usage: sendgamestarted -singleconnection <targetPlayerId> -manual -playerid <id> -leaderid <id> -leadername <name> -teamindex <byte> -playercount <byte>");
             return;
         }
-        GameStarted packet = new GameStarted(playerId, leaderId, leaderName, teamIndex, playerCount, PacketAction.Add);
+        GameStarted packet = new GameStarted(leaderId, leaderName, teamIndex, playerCount, PacketAction.Add);
         proxy.send(targetPlayer, packet);
         System.out.println("Sent GameStarted packet to " + targetPlayer + ": " + packet);
     }

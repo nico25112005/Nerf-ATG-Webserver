@@ -6,6 +6,7 @@ import net.nerfatg.proxy.packet.PacketType;
 
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 
 public class PlayerStatus extends Packet {
@@ -33,6 +34,8 @@ public class PlayerStatus extends Packet {
     @Override
     public void readPayload(ByteBuffer buffer, int offset) throws BufferOverflowException {
         buffer.position(offset);
+        buffer.order(ByteOrder.LITTLE_ENDIAN);
+
         byte[] playerIdBytes = new byte[8];
         buffer.get(playerIdBytes);
         this.playerId = new String(playerIdBytes, StandardCharsets.UTF_8);
@@ -50,7 +53,8 @@ public class PlayerStatus extends Packet {
     @Override
     public void writePayload(ByteBuffer buffer, int offset) throws BufferOverflowException {
         buffer.position(offset);
-        
+        buffer.order(ByteOrder.LITTLE_ENDIAN);
+
         // Write playerId (8 bytes fixed)
         byte[] originalPlayerIdBytes = playerId.getBytes(StandardCharsets.UTF_8);
         buffer.put(originalPlayerIdBytes, 0, Math.min(originalPlayerIdBytes.length, 8));

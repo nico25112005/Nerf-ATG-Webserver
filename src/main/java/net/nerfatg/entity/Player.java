@@ -1,47 +1,41 @@
 package net.nerfatg.entity;
+import net.nerfatg.Utils.GPS;
+import net.nerfatg.Utils.WeaponType;
 
 public class Player {
 
-    private long id;
-    private String name;
-    private double longitude;
-    private double latitude;
+    private final String id;
+    private final String name;
+    private WeaponType weaponType;
+    private GPS gps;
+    private byte health;
 
-    public Player(String name, double longitude, double latitude) {
-        this.name = name;
-        this.longitude = longitude;
-        this.latitude = latitude;
-    }
-
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
+    public Player(String id, String name) {
         this.id = id;
+        this.name = name;
     }
 
-    public double getLongitude() {
-        return longitude;
+    public String getId() {
+        return id;
     }
 
     public String getName() {
         return name;
     }
 
-    public double getLatitude() {
-        return latitude;
-    }
 
-    public void setLatitude(double latitude) {
-        this.latitude = latitude;
-    }
+    public WeaponType getWeaponType() { return weaponType; }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+    public void setWeaponType(WeaponType weaponType) {this.weaponType = weaponType; }
 
-    public void setLongitude(double longitude) {
-        this.longitude = longitude;
-    }
+    public GPS getGps(){ return gps; }
+
+    public void setGps(GPS gps){ this.gps = gps; }
+
+    public byte getHealth() { return health;}
+
+    public void setHealth(byte health) { this.health = health; }
+
+
+
 }

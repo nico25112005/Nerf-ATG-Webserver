@@ -4,6 +4,5 @@ public enum PacketAction {
     Generic,
     Add,
     Update,
-    Remove,
-    Replace,
+    Remove
 }
