@@ -3,6 +3,11 @@ package net.nerfatg.proxy.packet;
 public enum PacketType {
     Unknown,
 
+    ConnectToServer,
+    /*
+    UUID targetID
+    String playerName
+    */
     CreateGame,
     /*
     UUID playerID

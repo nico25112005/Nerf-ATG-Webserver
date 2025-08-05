@@ -1,4 +1,4 @@
-package net.nerfatg.entity;
+package net.nerfatg.data;
 
 import net.nerfatg.Utils.GPS;
 import net.nerfatg.Utils.GameType;
@@ -52,11 +52,6 @@ public class Game {
         return playerCount;
     }
 
-    public void setPlayerCount(byte playerCount) {
-        this.playerCount = playerCount;
-    }
-
-
     public byte getPlayersReady() {
         return playersReady;
     }
@@ -72,10 +67,16 @@ public class Game {
 
     public void addOrReplacePlayer(Player player) {
         playerList.put(player.getId(), player);
+        playerCount = (byte) playerList.size();
     }
 
     public void removePlayer(String playerId) {
         playerList.remove(playerId);
+        playerCount = (byte) playerList.size();
+    }
+
+    public Player getPlayer(String playerId){
+        return playerList.get(playerId);
     }
 
 

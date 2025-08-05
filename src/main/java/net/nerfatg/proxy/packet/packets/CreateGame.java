@@ -1,10 +1,9 @@
 package net.nerfatg.proxy.packet.packets;
 
-import net.nerfatg.game.GameType;
 import net.nerfatg.proxy.packet.Packet;
 import net.nerfatg.proxy.packet.PacketAction;
 import net.nerfatg.proxy.packet.PacketType;
-
+import net.nerfatg.Utils.GameType;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 

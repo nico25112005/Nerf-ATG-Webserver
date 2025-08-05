@@ -2,6 +2,8 @@ package net.nerfatg.command.commands;
 
 import net.nerfatg.command.Command;
 import net.nerfatg.command.CommandContext;
+import net.nerfatg.proxy.packet.packets.ConnectToServer;
+
 import java.nio.channels.SocketChannel;
 import java.io.IOException;
 import java.util.Map;

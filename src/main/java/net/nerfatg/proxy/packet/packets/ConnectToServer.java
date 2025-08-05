@@ -8,31 +8,31 @@ import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
-public class JoinGame extends Packet {
+public class ConnectToServer extends Packet {
     private String playerId;
-    private String gameId;
+    private String playerName;
 
-    public JoinGame(ByteBuffer buffer) throws BufferOverflowException {
+    public ConnectToServer(ByteBuffer buffer) throws BufferOverflowException {
         super(buffer);
     }
 
-    public JoinGame(String playerId, String gameId, PacketAction action) {
-        super(PacketType.JoinGame, action);
+    public ConnectToServer(String playerId, String playerName, PacketAction action) {
+        super(PacketType.PlayerInfo, action);
         this.playerId = playerId;
-        this.gameId = gameId;
+        this.playerName = playerName;
     }
 
     @Override
     public void readPayload(ByteBuffer buffer, int offset) throws BufferOverflowException {
         buffer.position(offset);
-
         byte[] playerIdBytes = new byte[8];
         buffer.get(playerIdBytes);
         this.playerId = new String(playerIdBytes, StandardCharsets.UTF_8);
         
-        byte[] gameNameBytes = new byte[8];
-        buffer.get(gameNameBytes);
-        this.gameId = new String(gameNameBytes, StandardCharsets.UTF_8);
+        byte[] nameBytes = new byte[12];
+        buffer.get(nameBytes);
+        this.playerName = new String(nameBytes, StandardCharsets.UTF_8).trim().replace("\0", "");
+        
     }
 
     @Override
@@ -46,19 +46,20 @@ public class JoinGame extends Packet {
             buffer.put(new byte[8 - originalPlayerIdBytes.length]); // pad with zeros
         }
         
-        // Write gameName (12 bytes fixed)
-        byte[] originalGameNameBytes = gameId.getBytes(StandardCharsets.UTF_8);
-        buffer.put(originalGameNameBytes, 0, Math.min(originalGameNameBytes.length, 8));
-        if (originalGameNameBytes.length < 8) {
-            buffer.put(new byte[8 - originalGameNameBytes.length]); // pad with zeros
+        // Write name (12 bytes fixed)
+        byte[] originalNameBytes = playerName.getBytes(StandardCharsets.UTF_8);
+        buffer.put(originalNameBytes, 0, Math.min(originalNameBytes.length, 12));
+        if (originalNameBytes.length < 12) {
+            buffer.put(new byte[12 - originalNameBytes.length]); // pad with zeros
         }
+        
     }
 
     public String getPlayerId() { return playerId; }
-    public String getGameId() { return gameId; }
+    public String getPlayerName() { return playerName; }
 
     @Override
     public String toString() {
-        return String.format("JoinGame{playerId='%s', gameId='%s'}", playerId, gameId);
+        return String.format("PlayerInfo{playerId='%s', playerName='%s'}", playerId, playerName);
     }
 }

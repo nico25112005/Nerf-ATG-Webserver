@@ -1,5 +1,6 @@
-package net.nerfatg.entity;
+package net.nerfatg.data;
 import net.nerfatg.Utils.GPS;
+import net.nerfatg.Utils.Team;
 import net.nerfatg.Utils.WeaponType;
 
 public class Player {
@@ -7,6 +8,7 @@ public class Player {
     private final String id;
     private final String name;
     private WeaponType weaponType;
+    private Team team;
     private GPS gps;
     private byte health;
 
@@ -27,6 +29,10 @@ public class Player {
     public WeaponType getWeaponType() { return weaponType; }
 
     public void setWeaponType(WeaponType weaponType) {this.weaponType = weaponType; }
+
+    public Team getTeam() { return team; }
+
+    public void setTeam(Team team) { this.team = team; }
 
     public GPS getGps(){ return gps; }
 

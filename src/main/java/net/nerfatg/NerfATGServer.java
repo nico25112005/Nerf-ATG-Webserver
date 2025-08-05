@@ -4,7 +4,6 @@ import jline.console.ConsoleReader;
 import net.nerfatg.command.CommandHandler;
 import net.nerfatg.command.CommandScanner;
 import net.nerfatg.command.commands.*;
-import net.nerfatg.game.GameHandler;
 import net.nerfatg.proxy.Proxy;
 import net.nerfatg.proxy.packet.PacketType;
 import net.nerfatg.task.Task;
@@ -35,16 +34,12 @@ public class NerfATGServer {
     private final ConsoleReader consoleReader;
 
     private final Proxy proxy;
-    private final GameHandler gameHandler;
 
     public NerfATGServer() throws IOException {
         this.properties = new Properties();
         this.properties.load(getClass().getClassLoader().getResourceAsStream("server.properties"));
 
         this.proxy = new Proxy(25115);
-        this.gameHandler = new GameHandler();
-
-        this.proxy.registerHandle(PacketType.CreateGame, this.gameHandler);
 
         this.taskScheduler = new TaskScheduler();
         this.commandHandler = new CommandHandler(this.taskScheduler,

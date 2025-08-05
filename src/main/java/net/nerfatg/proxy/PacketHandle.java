@@ -3,10 +3,11 @@ package net.nerfatg.proxy;
 import net.nerfatg.proxy.packet.Packet;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.Optional;
 
 public interface PacketHandle {
 
-    Optional<Packet> handle(ByteBuffer buffer);
+    List<PacketHandleResponse> handle(ByteBuffer buffer);
 
 }

@@ -7,7 +7,6 @@ import net.nerfatg.command.CommandContext;
 import net.nerfatg.proxy.Proxy;
 import net.nerfatg.proxy.packet.PacketAction;
 import net.nerfatg.proxy.packet.packets.GameInfo;
-import net.nerfatg.game.GameType;
 
 import java.util.Random;
 

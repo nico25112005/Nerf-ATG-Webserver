@@ -1,19 +1,18 @@
-import net.nerfatg.game.GameType;
 import net.nerfatg.proxy.PacketHandle;
-import net.nerfatg.proxy.Proxy;
-import net.nerfatg.proxy.packet.Packet;
+import net.nerfatg.proxy.PacketHandleResponse;
 import net.nerfatg.proxy.packet.PacketAction;
 import net.nerfatg.proxy.packet.PacketType;
 import net.nerfatg.proxy.packet.packets.CreateGame;
-import net.nerfatg.proxy.packet.packets.GameInfo;
 import org.junit.Test;
+import net.nerfatg.Utils.GameType;
 
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Optional;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
@@ -24,7 +23,7 @@ public class ProxyTest {
     private static class Handler implements PacketHandle {
 
         @Override
-        public Optional<Packet> handle(ByteBuffer buffer) {
+        public List<PacketHandleResponse> handle(ByteBuffer buffer) {
             // System.out.println(new String(bytes));
 
             CreateGame packet = new CreateGame(buffer);
@@ -33,8 +32,7 @@ public class ProxyTest {
             // GameInfo gameInfo = new GameInfo(packet.getGameType(), "D512A", packet.getGameName(), 0, 10, PacketAction.Add);
 
 
-
-            return Optional.empty();
+            return new ArrayList<>();
         }
     }
 
@@ -59,7 +57,7 @@ public class ProxyTest {
                 try (Socket socket = new Socket("localhost", 25115)) {
                     Logger.getLogger("Client").info("Connected to server");
 
-                    CreateGame packet = new CreateGame("A90DA31AD316", GameType.Team, "Testgame", (byte)0, PacketAction.Generic);
+                    CreateGame packet = new CreateGame("A90DA31AD316", GameType.TeamDeathMatch, "Testgame", (byte)0, PacketAction.Generic);
 
                     ByteBuffer buffer = ByteBuffer.allocate(64);
                     buffer.putInt(PacketType.CreateGame.ordinal());

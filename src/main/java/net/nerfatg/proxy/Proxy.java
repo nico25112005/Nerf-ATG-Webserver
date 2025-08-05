@@ -2,6 +2,7 @@ package net.nerfatg.proxy;
 
 import net.nerfatg.proxy.packet.Packet;
 import net.nerfatg.proxy.packet.PacketType;
+import net.nerfatg.proxy.packet.packets.ConnectToServer;
 
 import java.io.IOException;
 import java.net.*;
@@ -94,7 +95,6 @@ public class Proxy {
         // Registriere den neuen ClientChannel beim Selector für Leseoperationen
         clientChannel.register(selector, SelectionKey.OP_READ, ByteBuffer.allocate(64));
         connectedClients.add(clientChannel);
-        playerClients.put(clientChannel.getRemoteAddress().toString(), clientChannel);
         Logger.getLogger(getClass().getSimpleName()).log(Level.INFO, "Client connected: " + clientChannel.getRemoteAddress());
     }
 
@@ -109,29 +109,43 @@ public class Proxy {
             connectedClients.remove(clientChannel);
             clientChannel.close();
             key.cancel();
-            return;
         }
 
         if (buffer.position() == 64) {
             buffer.flip();
-            PacketType clientPacketType = PacketType.values()[buffer.getInt()];
+            PacketType clientPacketType = PacketType.values()[buffer.get()];
             Logger.getLogger(Proxy.class.getSimpleName()).log(Level.INFO, "Server received packet: " + clientPacketType);
 
-            List<Packet> responses = new ArrayList<>();
+            List<PacketHandleResponse> responses = new ArrayList<>();
 
             for (PacketHandle handle : handles.get(clientPacketType)) {
-                handle.handle(buffer.duplicate()).ifPresent(responses::add);
+                responses.addAll(handle.handle(buffer.duplicate()));
             }
 
-            for (Packet response : responses) {
-                ByteBuffer dbuf = ByteBuffer.allocate(64);
-                dbuf.putInt(response.getType().ordinal());
-                response.toBytes(dbuf);
-                dbuf.position(0);
+            for (PacketHandleResponse response : responses) {
+                for (Packet packet : response.getResponsePackets()){
 
-                Logger.getLogger(getClass().getSimpleName()).log(Level.INFO, "Send Response: " + response);
+                    ByteBuffer dbuf = ByteBuffer.allocate(64);
+                    packet.toBytes(dbuf);
+                    dbuf.position(0);
 
-                clientChannel.write(dbuf);
+                    if(response.getServerBroadcast()){
+
+                        Logger.getLogger(getClass().getSimpleName()).log(Level.INFO, "Send Packet: " + packet + " To: All");
+
+                        for(SocketChannel socket : playerClients.values()){
+                            socket.write(dbuf.duplicate());
+                        }
+                    }
+                    else{
+
+                        for(String playerId : response.getPlayerIds()){
+
+                            Logger.getLogger(getClass().getSimpleName()).log(Level.INFO, "Send Packet: " + packet + " To: " + playerId);
+                            playerClients.get(playerId).write(dbuf.duplicate());
+                        }
+                    }
+                }
             }
 
             buffer.clear();
