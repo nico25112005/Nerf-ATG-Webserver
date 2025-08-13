@@ -107,6 +107,7 @@ public class Proxy {
             // Client hat die Verbindung geschlossen
             Logger.getLogger(getClass().getSimpleName()).log(Level.INFO, "Client closed connection!: " + clientChannel.getRemoteAddress());
             connectedClients.remove(clientChannel);
+            //Todo: remove clients from server and from playerClients
             clientChannel.close();
             key.cancel();
         }
@@ -114,7 +115,12 @@ public class Proxy {
         if (buffer.position() == 64) {
             buffer.flip();
             PacketType clientPacketType = PacketType.values()[buffer.get()];
-            Logger.getLogger(Proxy.class.getSimpleName()).log(Level.INFO, "Server received packet: " + clientPacketType);
+
+            if(clientPacketType == PacketType.ConnectToServer){
+                playerClients.put(new ConnectToServer(buffer).getPlayerId(), clientChannel);
+            }
+            if(clientPacketType != PacketType.Ping)
+                Logger.getLogger(Proxy.class.getSimpleName()).log(Level.INFO, "Server received packet: " + clientPacketType);
 
             List<PacketHandleResponse> responses = new ArrayList<>();
 
@@ -131,17 +137,19 @@ public class Proxy {
 
                     if(response.getServerBroadcast()){
 
-                        Logger.getLogger(getClass().getSimpleName()).log(Level.INFO, "Send Packet: " + packet + " To: All");
-
                         for(SocketChannel socket : playerClients.values()){
                             socket.write(dbuf.duplicate());
+                            if(clientPacketType != PacketType.Ping)
+                                Logger.getLogger(getClass().getSimpleName()).log(Level.INFO, "Send Packet: " + packet + " To: " + socket.toString());
                         }
                     }
                     else{
 
                         for(String playerId : response.getPlayerIds()){
+                            if(clientPacketType != PacketType.Ping)
+                                Logger.getLogger(getClass().getSimpleName()).log(Level.INFO, "Send Packet: " + packet + " To: " + playerId);
+                            //Logger.getLogger(getClass().getSimpleName()).log(Level.INFO, Arrays.toString(dbuf.duplicate().array()));
 
-                            Logger.getLogger(getClass().getSimpleName()).log(Level.INFO, "Send Packet: " + packet + " To: " + playerId);
                             playerClients.get(playerId).write(dbuf.duplicate());
                         }
                     }

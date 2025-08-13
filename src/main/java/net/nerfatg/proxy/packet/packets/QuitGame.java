@@ -7,17 +7,17 @@ import net.nerfatg.proxy.packet.PacketType;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 
-public class ActivateAbility extends Packet
+public class QuitGame extends Packet
 {
     private String playerId;
 
-    public ActivateAbility(ByteBuffer buffer) throws BufferOverflowException {
+    public QuitGame(ByteBuffer buffer) throws BufferOverflowException {
         super(buffer);
     }
 
 
-    public ActivateAbility(String playerId, PacketAction action) {
-        super(PacketType.ActivateAbility, action);
+    public QuitGame(String playerId, PacketAction action) {
+        super(PacketType.QuitGame, action);
 
         this.playerId = playerId;
     }

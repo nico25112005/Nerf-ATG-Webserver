@@ -24,10 +24,8 @@ public class SwitchTeamHandler implements PacketHandle {
 
     @Override
     public List<PacketHandleResponse> handle(ByteBuffer buffer) {
-
-        List<PacketHandleResponse> responses = new ArrayList<>();
-
         SwitchTeam st = new SwitchTeam(buffer);
+
         PacketHandleResponse res = new PacketHandleResponse();
 
         Team team;
@@ -39,9 +37,9 @@ public class SwitchTeamHandler implements PacketHandle {
         }
 
         team = (player.getTeam() == Team.Red) ? Team.Blue : Team.Red;
-
+        player.setTeam(team);
         res.addResponsePacket(new PlayerInfo(player.getId(), player.getName(), (byte)team.ordinal(), PacketAction.Update));
 
-        return responses;
+        return List.of(res);
     }
 }

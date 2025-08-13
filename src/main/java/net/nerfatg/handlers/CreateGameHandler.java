@@ -26,8 +26,6 @@ public class CreateGameHandler implements PacketHandle {
     @Override
     public List<PacketHandleResponse> handle(ByteBuffer buffer) {
 
-        List<PacketHandleResponse> responses = new ArrayList<>();
-
         CreateGame cg = new CreateGame(buffer);
 
         server.addNewGame(new Game(cg.getGameName(), cg.getPlayerId(), cg.getMaxPlayer(),cg.getGameType()));
@@ -36,9 +34,7 @@ public class CreateGameHandler implements PacketHandle {
         res.setServerBroadcast();
         res.addResponsePacket(new GameInfo(cg.getGameType(), cg.getPlayerId(), cg.getGameName(), (byte) 0, cg.getMaxPlayer(), PacketAction.Add));
 
-        responses.add(res);
 
-
-        return responses;
+        return List.of(res);
     }
 }

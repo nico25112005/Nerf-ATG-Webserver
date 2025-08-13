@@ -84,7 +84,7 @@ public class PlayerStatus extends Packet {
 
     @Override
     public String toString() {
-        return String.format("PlayerStatus{playerId='%s', playerName='%s', teamIndex=%d, longitude=%f, latitude=%f, health=%d}", 
-                           playerId, name, index, longitude, latitude, health);
+        return String.format("PlayerStatus{playerId='%s', playerName='%s', teamIndex=%d, longitude=%f, latitude=%f, health=%d, action=%s}",
+                           playerId, name, index, longitude, latitude, health, getAction());
     }
 }

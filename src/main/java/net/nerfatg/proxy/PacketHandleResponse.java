@@ -28,6 +28,10 @@ public class PacketHandleResponse {
         playerIds.add(playerId);
     }
 
+    public void removePlayerId(String playerId){
+        playerIds.remove(playerId);
+    }
+
     public List<String> getPlayerIds() {
         return playerIds;
     }

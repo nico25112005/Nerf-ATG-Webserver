@@ -41,6 +41,14 @@ public class Server {
         gameList.put(game.getGameId(), game);
     }
 
+    public void removeGame(String gameId){
+        for(String playerId : gameList.get(gameId).getPlayerList().keySet()){
+            removePlayerFromGame(gameId, playerId);
+        }
+
+        gameList.remove(gameId);
+    }
+
     public void addOrReplacePlayerInGame(String gameId, String playerId){
         gameList.get(gameId).addOrReplacePlayer(notInGame.get(playerId));
         playerInGame.put(playerId, gameId);

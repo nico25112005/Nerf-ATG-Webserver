@@ -1,5 +1,6 @@
 package net.nerfatg.command.commands;
 
+import net.nerfatg.Utils.GPS;
 import net.nerfatg.command.Command;
 import net.nerfatg.command.CommandArgument;
 import net.nerfatg.command.CommandArgumentValue;
@@ -116,7 +117,7 @@ public class SendBaseLocationCommand extends Command {
         byte teamIndex = (byte) random.nextInt(2); // 0 or 1
         double longitude = random.nextDouble() * 180 - 90; // -90 to +90
         double latitude = random.nextDouble() * 360 - 180; // -180 to +180
-        BaseLocation packet = new BaseLocation(teamIndex, longitude, latitude, action);
+        BaseLocation packet = new BaseLocation("12345678", teamIndex, new GPS(longitude, latitude), action);
         proxy.broadcast(packet);
         System.out.println("Sent BaseLocation packet to all clients: " + packet);
     }
@@ -155,7 +156,7 @@ public class SendBaseLocationCommand extends Command {
             System.out.println("Usage: sendbaselocation -broadcast -manual -teamindex <byte> -longitude <double> -latitude <double> [-action <action>]");
             return;
         }
-        BaseLocation packet = new BaseLocation(teamIndex, longitude, latitude, action);
+        BaseLocation packet = new BaseLocation("12345678", teamIndex, new GPS(longitude, latitude), action);
         proxy.broadcast(packet);
         System.out.println("Sent BaseLocation packet to all clients: " + packet);
     }
@@ -174,7 +175,7 @@ public class SendBaseLocationCommand extends Command {
         byte teamIndex = (byte) random.nextInt(2);
         double longitude = random.nextDouble() * 180 - 90;
         double latitude = random.nextDouble() * 360 - 180;
-        BaseLocation packet = new BaseLocation(teamIndex, longitude, latitude, PacketAction.Add);
+        BaseLocation packet = new BaseLocation("12345678", teamIndex, new GPS(longitude, latitude), PacketAction.Add);
         proxy.send(targetPlayer, packet);
         System.out.println("Sent BaseLocation packet to " + targetPlayer + ": " + packet);
     }
@@ -216,7 +217,7 @@ public class SendBaseLocationCommand extends Command {
             System.out.println("Usage: sendbaselocation -singleconnection <targetPlayerId> -manual -teamindex <byte> -longitude <double> -latitude <double>");
             return;
         }
-        BaseLocation packet = new BaseLocation(teamIndex, longitude, latitude, PacketAction.Add);
+        BaseLocation packet = new BaseLocation("12345678", teamIndex, new GPS(longitude, latitude), PacketAction.Add);
         proxy.send(targetPlayer, packet);
         System.out.println("Sent BaseLocation packet to " + targetPlayer + ": " + packet);
     }

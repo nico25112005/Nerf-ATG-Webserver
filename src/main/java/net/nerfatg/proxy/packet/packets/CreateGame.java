@@ -34,7 +34,7 @@ public class CreateGame extends Packet {
         buffer.get(playerIdBytes);
         this.playerId = new String(playerIdBytes, java.nio.charset.StandardCharsets.UTF_8);
         
-        this.gameType = GameType.values()[buffer.getInt()];
+        this.gameType = GameType.values()[buffer.get()];
         
         byte[] gameNameBytes = new byte[12];
         buffer.get(gameNameBytes);

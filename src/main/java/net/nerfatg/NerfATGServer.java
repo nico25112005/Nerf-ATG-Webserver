@@ -1,9 +1,11 @@
 package net.nerfatg;
 
+import com.sun.xml.bind.v2.runtime.reflect.Lister;
 import jline.console.ConsoleReader;
 import net.nerfatg.command.CommandHandler;
 import net.nerfatg.command.CommandScanner;
 import net.nerfatg.command.commands.*;
+import net.nerfatg.handlers.*;
 import net.nerfatg.proxy.Proxy;
 import net.nerfatg.proxy.packet.PacketType;
 import net.nerfatg.task.Task;
@@ -40,6 +42,17 @@ public class NerfATGServer {
         this.properties.load(getClass().getClassLoader().getResourceAsStream("server.properties"));
 
         this.proxy = new Proxy(25115);
+
+        this.proxy.registerHandle(PacketType.ConnectToServer, new ConnectToServerHandler());
+        this.proxy.registerHandle(PacketType.CreateGame, new CreateGameHandler());
+        this.proxy.registerHandle(PacketType.JoinGame, new JoinGameHandler());
+        this.proxy.registerHandle(PacketType.SwitchTeam, new SwitchTeamHandler());
+        this.proxy.registerHandle(PacketType.StartGame, new StartGameHandler());
+        this.proxy.registerHandle(PacketType.PlayerReady, new PlayerReadyHandler());
+        this.proxy.registerHandle(PacketType.BaseLocation, new BaseLocationHandler());
+        this.proxy.registerHandle(PacketType.PlayerStatus, new PlayerStatusHandler());
+        this.proxy.registerHandle(PacketType.QuitGame, new QuitGameHandler());
+        this.proxy.registerHandle(PacketType.Ping, new PingHandler());
 
         this.taskScheduler = new TaskScheduler();
         this.commandHandler = new CommandHandler(this.taskScheduler,

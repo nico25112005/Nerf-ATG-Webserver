@@ -13,7 +13,7 @@ public class Game {
 
     private final String gameName;
     private final String gameId;
-    private final byte maxPlayers;
+    private byte maxPlayers;
 
     private byte playerCount = 0;
     private byte playersReady = 0;
@@ -56,9 +56,7 @@ public class Game {
         return playersReady;
     }
 
-    public void setPlayersReady(byte playersReady) {
-        this.playersReady = playersReady;
-    }
+    public void addPlayersReady() { this.playersReady++; }
 
 
     public Map<String, Player> getPlayerList() {
@@ -78,7 +76,6 @@ public class Game {
     public Player getPlayer(String playerId){
         return playerList.get(playerId);
     }
-
 
     public Map<Team, GPS> getBaseLocationList() {
         return Collections.unmodifiableMap(baseLocationList);
@@ -101,4 +98,8 @@ public class Game {
         teamleaders.put(team, playerId);
     }
 
+
+    public void setGameRunning(){
+        this.maxPlayers = 0;
+    }
 }
