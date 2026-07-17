@@ -38,7 +38,7 @@ public class StartGameHandler implements PacketHandle {
                 .count() > 1;
 
 
-        if (!differentTeams) {
+        if (differentTeams) {
 
             //Gamemember Response
             PacketHandleResponse gameMemberRes = new PacketHandleResponse();

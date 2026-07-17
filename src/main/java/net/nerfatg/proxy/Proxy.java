@@ -1,8 +1,11 @@
 package net.nerfatg.proxy;
 
+import net.nerfatg.data.Server;
 import net.nerfatg.proxy.packet.Packet;
+import net.nerfatg.proxy.packet.PacketAction;
 import net.nerfatg.proxy.packet.PacketType;
 import net.nerfatg.proxy.packet.packets.ConnectToServer;
+import net.nerfatg.proxy.packet.packets.QuitGame;
 
 import java.io.IOException;
 import java.net.*;
@@ -14,8 +17,6 @@ import java.nio.channels.SocketChannel;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 public class Proxy {
 
@@ -107,56 +108,77 @@ public class Proxy {
             // Client hat die Verbindung geschlossen
             Logger.getLogger(getClass().getSimpleName()).log(Level.INFO, "Client closed connection!: " + clientChannel.getRemoteAddress());
             connectedClients.remove(clientChannel);
-            //Todo: remove clients from server and from playerClients
-            clientChannel.close();
+            String playerId = playerClients.entrySet()
+                    .stream()
+                    .filter(e -> Objects.equals(e.getValue(), clientChannel))
+                    .map(Map.Entry::getKey)
+                    .findFirst()
+                    .orElse(null);
+
+
+            Server server = Server.Initalize();
+
+            if(server.getPlayerInGame().containsKey(playerId)){
+                ByteBuffer temp = ByteBuffer.allocate(64);
+                new QuitGame(playerId, PacketAction.Generic).toBytes(temp);
+                handlePacket(temp, clientChannel);
+            }
+            server.playerDisconectedFromServer(playerId);
+
+            if(playerId != null)
+                playerClients.remove(playerId);
+
             key.cancel();
         }
 
         if (buffer.position() == 64) {
-            buffer.flip();
-            PacketType clientPacketType = PacketType.values()[buffer.get()];
+            handlePacket(buffer, clientChannel);
+            buffer.clear();
+        }
+    }
 
-            if(clientPacketType == PacketType.ConnectToServer){
-                playerClients.put(new ConnectToServer(buffer).getPlayerId(), clientChannel);
-            }
-            if(clientPacketType != PacketType.Ping)
-                Logger.getLogger(Proxy.class.getSimpleName()).log(Level.INFO, "Server received packet: " + clientPacketType);
+    public void handlePacket(ByteBuffer buffer, SocketChannel clientChannel) throws IOException {
+        buffer.flip();
+        PacketType clientPacketType = PacketType.values()[buffer.get()];
 
-            List<PacketHandleResponse> responses = new ArrayList<>();
+        if(clientPacketType == PacketType.ConnectToServer){
+            playerClients.put(new ConnectToServer(buffer).getPlayerId(), clientChannel);
+        }
+        if(clientPacketType != PacketType.Ping && clientPacketType != PacketType.PlayerStatus)
+            Logger.getLogger(Proxy.class.getSimpleName()).log(Level.INFO, "Server received packet: " + clientPacketType);
 
-            for (PacketHandle handle : handles.get(clientPacketType)) {
-                responses.addAll(handle.handle(buffer.duplicate()));
-            }
+        List<PacketHandleResponse> responses = new ArrayList<>();
 
-            for (PacketHandleResponse response : responses) {
-                for (Packet packet : response.getResponsePackets()){
+        for (PacketHandle handle : handles.get(clientPacketType)) {
+            responses.addAll(handle.handle(buffer.duplicate()));
+        }
 
-                    ByteBuffer dbuf = ByteBuffer.allocate(64);
-                    packet.toBytes(dbuf);
-                    dbuf.position(0);
+        for (PacketHandleResponse response : responses) {
+            for (Packet packet : response.getResponsePackets()){
 
-                    if(response.getServerBroadcast()){
+                ByteBuffer dbuf = ByteBuffer.allocate(64);
+                packet.toBytes(dbuf);
+                dbuf.position(0);
 
-                        for(SocketChannel socket : playerClients.values()){
-                            socket.write(dbuf.duplicate());
-                            if(clientPacketType != PacketType.Ping)
-                                Logger.getLogger(getClass().getSimpleName()).log(Level.INFO, "Send Packet: " + packet + " To: " + socket.toString());
-                        }
+                if(response.getServerBroadcast()){
+
+                    for(SocketChannel socket : playerClients.values()){
+                        socket.write(dbuf.duplicate());
+                        if(clientPacketType != PacketType.Ping && clientPacketType != PacketType.PlayerStatus)
+                            Logger.getLogger(getClass().getSimpleName()).log(Level.INFO, "Send Packet: " + packet + " To: " + socket);
                     }
-                    else{
+                }
+                else{
 
-                        for(String playerId : response.getPlayerIds()){
-                            if(clientPacketType != PacketType.Ping)
-                                Logger.getLogger(getClass().getSimpleName()).log(Level.INFO, "Send Packet: " + packet + " To: " + playerId);
-                            //Logger.getLogger(getClass().getSimpleName()).log(Level.INFO, Arrays.toString(dbuf.duplicate().array()));
+                    for(String playerId : response.getPlayerIds()){
+                        if(clientPacketType != PacketType.Ping && clientPacketType != PacketType.PlayerStatus)
+                            Logger.getLogger(getClass().getSimpleName()).log(Level.INFO, "Send Packet: " + packet + " To: " + playerId);
+                        //Logger.getLogger(getClass().getSimpleName()).log(Level.INFO, Arrays.toString(dbuf.duplicate().array()));
 
-                            playerClients.get(playerId).write(dbuf.duplicate());
-                        }
+                        playerClients.get(playerId).write(dbuf.duplicate());
                     }
                 }
             }
-
-            buffer.clear();
         }
     }
 

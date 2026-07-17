@@ -25,19 +25,26 @@ public class PlayerStatusHandler implements PacketHandle {
         PlayerStatus ps = new PlayerStatus(buffer);
 
         Game game = server.getGame(server.getPlayerAttendingGame(ps.getPlayerId()));
-        Player player = game.getPlayer(ps.getPlayerId());
+        if(game != null){
+            Player player = game.getPlayer(ps.getPlayerId());
 
-        player.setGps(new GPS(ps.getLongitude(), ps.getLatitude()));
-        player.setHealth(ps.getHealth());
+            player.setGps(new GPS(ps.getLongitude(), ps.getLatitude()));
+            player.setHealth(ps.getHealth());
 
-        PacketHandleResponse gameMemberRes = new PacketHandleResponse();
+            PacketHandleResponse gameMemberRes = new PacketHandleResponse();
 
-        for(String p : game.getPlayerList().keySet()){
-            gameMemberRes.addPlayerId(p);
+            for(String p : game.getPlayerList().keySet()){
+                gameMemberRes.addPlayerId(p);
+            }
+
+            gameMemberRes.addResponsePacket(ps);
+
+            return List.of(gameMemberRes);
         }
+        else{
+            PacketHandleResponse senderRes = new PacketHandleResponse();
 
-        gameMemberRes.addResponsePacket(ps);
-
-        return List.of(gameMemberRes);
+            return List.of();
+        }
     }
 }
