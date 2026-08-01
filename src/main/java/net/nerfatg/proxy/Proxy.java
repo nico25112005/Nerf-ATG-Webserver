@@ -23,6 +23,11 @@ public class Proxy {
     private static final Set<SocketChannel> connectedClients = Collections.synchronizedSet(new HashSet<>());
     private static final HashMap<String, SocketChannel> playerClients = new HashMap<>();
 
+    private static long packetsReceived = 0;
+    private static long packetsSent = 0;
+    private static long totalConnections = 0;
+    private static long currentConnections = 0;
+
     private final int port;
 
     private boolean running;
@@ -96,6 +101,8 @@ public class Proxy {
         // Registriere den neuen ClientChannel beim Selector für Leseoperationen
         clientChannel.register(selector, SelectionKey.OP_READ, ByteBuffer.allocate(64));
         connectedClients.add(clientChannel);
+        totalConnections++;
+        currentConnections++;
         Logger.getLogger(getClass().getSimpleName()).log(Level.INFO, "Client connected: " + clientChannel.getRemoteAddress());
     }
 
@@ -108,6 +115,7 @@ public class Proxy {
             // Client hat die Verbindung geschlossen
             Logger.getLogger(getClass().getSimpleName()).log(Level.INFO, "Client closed connection!: " + clientChannel.getRemoteAddress());
             connectedClients.remove(clientChannel);
+            currentConnections--;
             String playerId = playerClients.entrySet()
                     .stream()
                     .filter(e -> Objects.equals(e.getValue(), clientChannel))
@@ -138,6 +146,7 @@ public class Proxy {
     }
 
     public void handlePacket(ByteBuffer buffer, SocketChannel clientChannel) throws IOException {
+        packetsReceived++;
         buffer.flip();
         PacketType clientPacketType = PacketType.values()[buffer.get()];
 
@@ -164,6 +173,7 @@ public class Proxy {
 
                     for(SocketChannel socket : playerClients.values()){
                         socket.write(dbuf.duplicate());
+                        packetsSent++;
                         if(clientPacketType != PacketType.Ping && clientPacketType != PacketType.PlayerStatus)
                             Logger.getLogger(getClass().getSimpleName()).log(Level.INFO, "Send Packet: " + packet + " To: " + socket);
                     }
@@ -176,6 +186,7 @@ public class Proxy {
                         //Logger.getLogger(getClass().getSimpleName()).log(Level.INFO, Arrays.toString(dbuf.duplicate().array()));
 
                         playerClients.get(playerId).write(dbuf.duplicate());
+                        packetsSent++;
                     }
                 }
             }
@@ -217,5 +228,21 @@ public class Proxy {
 
     public HashMap<String, SocketChannel> getPlayerClients(){
         return playerClients;
+    }
+
+    public static long getPacketsReceived() {
+        return packetsReceived;
+    }
+
+    public static long getPacketsSent() {
+        return packetsSent;
+    }
+
+    public static long getTotalConnections() {
+        return totalConnections;
+    }
+
+    public static long getCurrentConnections() {
+        return currentConnections;
     }
 }

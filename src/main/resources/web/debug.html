@@ -160,6 +160,11 @@
         </div>
 
         <div class="stats-grid" id="statsGrid">
+            <div class="stat-card"><div class="label">Uptime</div><div class="value" id="stat-uptime">—</div></div>
+            <div class="stat-card"><div class="label">TCP Connections</div><div class="value" id="stat-conn-cur">—</div></div>
+            <div class="stat-card"><div class="label">Total Connects</div><div class="value" id="stat-conn-total">—</div></div>
+            <div class="stat-card"><div class="label">Packets In</div><div class="value" id="stat-pkts-in">—</div></div>
+            <div class="stat-card"><div class="label">Packets Out</div><div class="value" id="stat-pkts-out">—</div></div>
             <div class="stat-card"><div class="label">Used Memory</div><div class="value" id="stat-mem-used">—</div></div>
             <div class="stat-card"><div class="label">Free Memory</div><div class="value" id="stat-mem-free">—</div></div>
             <div class="stat-card"><div class="label">Max Memory</div><div class="value" id="stat-mem-max">—</div></div>
@@ -195,6 +200,23 @@
                 const resp = await fetch('/api/debug/status');
                 const s = await resp.json();
                 const fmtMB = (b) => (b / 1048576).toFixed(1) + ' MB';
+                const fmtUptime = (ms) => {
+                    const seconds = Math.floor(ms / 1000);
+                    const days = Math.floor(seconds / 86400);
+                    const hours = Math.floor((seconds % 86400) / 3600);
+                    const minutes = Math.floor((seconds % 3600) / 60);
+                    const secs = seconds % 60;
+                    if (days > 0) return `${days}d ${hours}h ${minutes}m ${secs}s`;
+                    if (hours > 0) return `${hours}h ${minutes}m ${secs}s`;
+                    if (minutes > 0) return `${minutes}m ${secs}s`;
+                    return `${secs}s`;
+                };
+
+                document.getElementById('stat-uptime').textContent = fmtUptime(s.uptimeMs);
+                document.getElementById('stat-conn-cur').textContent = s.currentConnections;
+                document.getElementById('stat-conn-total').textContent = s.totalConnections;
+                document.getElementById('stat-pkts-in').textContent = s.packetsReceived;
+                document.getElementById('stat-pkts-out').textContent = s.packetsSent;
 
                 const used = document.getElementById('stat-mem-used');
                 used.textContent = fmtMB(s.usedMemory);

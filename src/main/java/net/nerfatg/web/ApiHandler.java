@@ -7,6 +7,8 @@ import net.nerfatg.Utils.Team;
 import net.nerfatg.data.Game;
 import net.nerfatg.data.Player;
 import net.nerfatg.data.Server;
+import net.nerfatg.proxy.Proxy;
+import net.nerfatg.NerfATGServer;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -180,16 +182,19 @@ public class ApiHandler implements HttpHandler {
     private String debugStatus() {
         Runtime rt = Runtime.getRuntime();
         return "{"
-                + "\"port\":" + server.hashCode() // just a placeholder, we don't store port
+                + "\"usedMemory\":" + (rt.totalMemory() - rt.freeMemory())
                 + ",\"freeMemory\":" + rt.freeMemory()
-                + ",\"totalMemory\":" + rt.totalMemory()
                 + ",\"maxMemory\":" + rt.maxMemory()
-                + ",\"usedMemory\":" + (rt.totalMemory() - rt.freeMemory())
                 + ",\"processors\":" + rt.availableProcessors()
                 + ",\"threadCount\":" + Thread.activeCount()
                 + ",\"gameCount\":" + server.getGameList().size()
-                + ",\"playersNotInGame\":" + server.getNotInGame().size()
                 + ",\"playersInGame\":" + server.getPlayerInGame().size()
+                + ",\"playersNotInGame\":" + server.getNotInGame().size()
+                + ",\"packetsReceived\":" + Proxy.getPacketsReceived()
+                + ",\"packetsSent\":" + Proxy.getPacketsSent()
+                + ",\"totalConnections\":" + Proxy.getTotalConnections()
+                + ",\"currentConnections\":" + Proxy.getCurrentConnections()
+                + ",\"uptimeMs\":" + (System.currentTimeMillis() - NerfATGServer.START_TIME)
                 + ",\"timestamp\":" + System.currentTimeMillis()
                 + "}";
     }

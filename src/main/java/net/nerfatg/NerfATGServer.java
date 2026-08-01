@@ -21,6 +21,8 @@ import java.util.logging.LogManager;
 
 public class NerfATGServer {
 
+    public static final long START_TIME = System.currentTimeMillis();
+
     public static void loadLoggerConfiguration() {
         InputStream stream = NerfATGServer.class.getClassLoader().
                 getResourceAsStream("logging.properties");
