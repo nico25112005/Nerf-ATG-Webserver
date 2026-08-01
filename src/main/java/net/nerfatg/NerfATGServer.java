@@ -1,7 +1,8 @@
 package net.nerfatg;
 
 import com.sun.xml.bind.v2.runtime.reflect.Lister;
-import jline.console.ConsoleReader;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import net.nerfatg.command.CommandHandler;
 import net.nerfatg.command.CommandScanner;
 import net.nerfatg.command.commands.*;
@@ -35,7 +36,7 @@ public class NerfATGServer {
     private final TaskScheduler taskScheduler;
     private final CommandHandler commandHandler;
 
-    private final ConsoleReader consoleReader;
+    private final BufferedReader consoleReader;
 
     private final Proxy proxy;
     private final DashboardServer dashboardServer;
@@ -63,9 +64,7 @@ public class NerfATGServer {
         this.commandHandler = new CommandHandler(this.taskScheduler,
                 ' ');
 
-        this.consoleReader = new ConsoleReader(System.in, System.out);
-        this.consoleReader.addCompleter(this.commandHandler);
-        this.consoleReader.setPrompt(">" + " ");
+        this.consoleReader = new BufferedReader(new InputStreamReader(System.in));
 
         Task task = new Task("command-handler", this::startCommandHandler);
         this.taskScheduler.runRepeatingTask(task);
@@ -91,7 +90,8 @@ public class NerfATGServer {
     private void startCommandHandler() {
         CommandScanner commandScanner = () -> {
             try {
-                return this.consoleReader.readLine();
+                String line = this.consoleReader.readLine();
+                return line != null ? line : "";
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

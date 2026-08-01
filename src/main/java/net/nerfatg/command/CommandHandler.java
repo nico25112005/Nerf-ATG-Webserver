@@ -5,7 +5,6 @@
 
 package net.nerfatg.command;
 
-import jline.console.completer.Completer;
 import net.nerfatg.task.AsyncTaskScheduler;
 import net.nerfatg.task.Task;
 
@@ -14,7 +13,7 @@ import java.io.InputStream;
 import java.util.*;
 import java.util.logging.Logger;
 
-public class CommandHandler implements Completer {
+public class CommandHandler {
 
     private final Properties properties = new Properties();
     private final Map<String, Command> commandMap = new LinkedHashMap<>();
@@ -113,7 +112,6 @@ public class CommandHandler implements Completer {
         this.logger = logger;
     }
 
-    @Override
     public int complete(String buffer, int cursor, List<CharSequence> candidates) {
         final SortedSet<String> commands = new TreeSet<>(commandMap.keySet());
         String prefix;
