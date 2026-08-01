@@ -8,6 +8,7 @@ import net.nerfatg.data.Game;
 import net.nerfatg.data.Player;
 import net.nerfatg.data.Server;
 import net.nerfatg.proxy.Proxy;
+import net.nerfatg.proxy.packet.PacketType;
 import net.nerfatg.NerfATGServer;
 
 import java.io.IOException;
@@ -50,6 +51,10 @@ public class ApiHandler implements HttpHandler {
                 response = LogCaptureHandler.getAllLogsAsJson();
             } else if ("/api/debug/status".equals(path)) {
                 response = debugStatus();
+            } else if ("/api/debug/packet-types".equals(path)) {
+                response = debugPacketTypes();
+            } else if ("/api/debug/connections".equals(path)) {
+                response = debugConnections();
             } else {
                 response = "{\"error\":\"Not found\"}";
                 status = 404;
@@ -174,6 +179,34 @@ public class ApiHandler implements HttpHandler {
                     + ",\"lat\":" + gps.getLatitude()
                     + ",\"lon\":" + gps.getLongitude()
                     + "}");
+        }
+        sb.append("]");
+        return sb.toString();
+    }
+
+    private String debugPacketTypes() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("{");
+        boolean first = true;
+        Map<PacketType, Long> counts = Proxy.getPacketsByType();
+        for (PacketType type : PacketType.values()) {
+            if (!first) sb.append(",");
+            first = false;
+            sb.append(""").append(escapeJson(type.name())).append("":");
+            sb.append(counts.getOrDefault(type, 0L));
+        }
+        sb.append("}");
+        return sb.toString();
+    }
+
+    private String debugConnections() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("[");
+        boolean first = true;
+        for (String entry : Proxy.getConnectionLog()) {
+            if (!first) sb.append(",");
+            first = false;
+            sb.append("\"").append(escapeJson(entry)).append("\"");
         }
         sb.append("]");
         return sb.toString();

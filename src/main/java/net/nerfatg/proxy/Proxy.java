@@ -15,6 +15,8 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -27,6 +29,11 @@ public class Proxy {
     private static long packetsSent = 0;
     private static long totalConnections = 0;
     private static long currentConnections = 0;
+    private static long errorCount = 0;
+
+    private static final Map<PacketType, Long> packetsByType = new ConcurrentHashMap<>();
+    private static final Deque<String> connectionLog = new ConcurrentLinkedDeque<>();
+    private static final int MAX_CONN_LOG = 50;
 
     private final int port;
 
@@ -68,9 +75,15 @@ public class Proxy {
 
             // Server-Schleife
             while (running) {
-                spin(serverSocketChannel, selector);
+                try {
+                    spin(serverSocketChannel, selector);
+                } catch (IOException e) {
+                    errorCount++;
+                    Logger.getLogger(getClass().getSimpleName()).log(Level.SEVERE, e.getMessage());
+                }
             }
         } catch (IOException e) {
+            errorCount++;
             Logger.getLogger(getClass().getSimpleName()).log(Level.SEVERE, e.getMessage());
         }
     }
@@ -103,6 +116,8 @@ public class Proxy {
         connectedClients.add(clientChannel);
         totalConnections++;
         currentConnections++;
+        connectionLog.addLast("[" + new Date() + "] CONNECT " + clientChannel.getRemoteAddress());
+        while (connectionLog.size() > MAX_CONN_LOG) connectionLog.pollFirst();
         Logger.getLogger(getClass().getSimpleName()).log(Level.INFO, "Client connected: " + clientChannel.getRemoteAddress());
     }
 
@@ -116,6 +131,8 @@ public class Proxy {
             Logger.getLogger(getClass().getSimpleName()).log(Level.INFO, "Client closed connection!: " + clientChannel.getRemoteAddress());
             connectedClients.remove(clientChannel);
             currentConnections--;
+            connectionLog.addLast("[" + new Date() + "] DISCONNECT " + clientChannel.getRemoteAddress());
+            while (connectionLog.size() > MAX_CONN_LOG) connectionLog.pollFirst();
             String playerId = playerClients.entrySet()
                     .stream()
                     .filter(e -> Objects.equals(e.getValue(), clientChannel))
@@ -149,6 +166,7 @@ public class Proxy {
         packetsReceived++;
         buffer.flip();
         PacketType clientPacketType = PacketType.values()[buffer.get()];
+        packetsByType.merge(clientPacketType, 1L, Long::sum);
 
         if(clientPacketType == PacketType.ConnectToServer){
             playerClients.put(new ConnectToServer(buffer).getPlayerId(), clientChannel);
@@ -173,7 +191,7 @@ public class Proxy {
 
                     for(SocketChannel socket : playerClients.values()){
                         socket.write(dbuf.duplicate());
-                        packetsSent++;
+
                         if(clientPacketType != PacketType.Ping && clientPacketType != PacketType.PlayerStatus)
                             Logger.getLogger(getClass().getSimpleName()).log(Level.INFO, "Send Packet: " + packet + " To: " + socket);
                     }
@@ -185,8 +203,16 @@ public class Proxy {
                             Logger.getLogger(getClass().getSimpleName()).log(Level.INFO, "Send Packet: " + packet + " To: " + playerId);
                         //Logger.getLogger(getClass().getSimpleName()).log(Level.INFO, Arrays.toString(dbuf.duplicate().array()));
 
-                        playerClients.get(playerId).write(dbuf.duplicate());
-                        packetsSent++;
+                        try {
+                            SocketChannel channel = playerClients.get(playerId);
+                            if (channel != null) {
+                                channel.write(dbuf.duplicate());
+                                packetsSent++;
+                            }
+                        } catch (IOException e) {
+                            errorCount++;
+                            Logger.getLogger(Proxy.class.getSimpleName()).log(Level.SEVERE, e.getMessage());
+                        }
                     }
                 }
             }
@@ -197,11 +223,17 @@ public class Proxy {
         ByteBuffer buffer = ByteBuffer.allocate(64);
         buffer.putInt(packet.getType().ordinal());
         packet.toBytes(buffer);
-
+        SocketChannel channel = playerClients.get(playerId);
+        if (channel == null) {
+            errorCount++;
+            Logger.getLogger(Proxy.class.getSimpleName()).log(Level.WARNING, "No client found for playerId: " + playerId);
+            return;
+        }
         try {
-            playerClients.get(playerId).write(buffer);
+            channel.write(buffer);
         } catch (IOException e) {
-            Logger.getLogger(getClass().getSimpleName()).log(Level.SEVERE, e.getMessage());
+            errorCount++;
+            Logger.getLogger(Proxy.class.getSimpleName()).log(Level.SEVERE, e.getMessage());
         }
     }
 
@@ -216,9 +248,11 @@ public class Proxy {
                 Logger.getLogger(Proxy.class.getSimpleName()).log(Level.INFO, Arrays.toString(buffer.array()));
 
                 client.write(buffer);
+                packetsSent++;
             }
         } catch (IOException e) {
-            Logger.getLogger(getClass().getSimpleName()).log(Level.SEVERE, e.getMessage());
+            errorCount++;
+            Logger.getLogger(Proxy.class.getSimpleName()).log(Level.SEVERE, e.getMessage());
         }
     }
 
@@ -244,5 +278,17 @@ public class Proxy {
 
     public static long getCurrentConnections() {
         return currentConnections;
+    }
+
+    public static long getErrorCount() {
+        return errorCount;
+    }
+
+    public static Map<PacketType, Long> getPacketsByType() {
+        return Collections.unmodifiableMap(packetsByType);
+    }
+
+    public static Deque<String> getConnectionLog() {
+        return connectionLog;
     }
 }
