@@ -88,16 +88,18 @@
             line-height: 1.5;
             max-height: 600px;
             overflow-y: auto;
-            overflow-x: hidden;
+            overflow-x: auto;
             padding: 12px;
+            -webkit-overflow-scrolling: touch;
         }
         .log-line {
             display: flex;
             gap: 8px;
             padding: 2px 0;
             border-bottom: 1px solid #1a1a1a;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
+            white-space: nowrap;
+            width: max-content;
+            min-width: 100%;
         }
         .log-line:hover { background: #1a1a1a; }
         .log-time {
@@ -125,7 +127,6 @@
         .log-msg {
             color: #ccc;
             white-space: nowrap;
-            min-width: 0;
         }
         .log-thrown {
             color: #e74c3c;
