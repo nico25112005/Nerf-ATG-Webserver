@@ -530,3 +530,83 @@ a:hover {
     flex-wrap: wrap;
   }
 }
+
+/* Light Theme */
+[data-theme="light"] {
+  --bg-0: #f5f6f8;
+  --bg-1: #ffffff;
+  --bg-2: #ebedf0;
+  --bg-3: #d8dbe0;
+  --text: #1a1d24;
+  --text-muted: #6b7280;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --red: #dc2626;
+  --blue: #2563eb;
+  --violet: #7c3aed;
+  --green: #16a34a;
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] body {
+  background: var(--bg-0);
+  color: var(--text);
+}
+
+[data-theme="light"] .game-card,
+[data-theme="light"] .sidebar,
+[data-theme="light"] .stat-card,
+[data-theme="light"] .player-card {
+  background: var(--bg-1);
+  border-color: var(--bg-3);
+}
+
+[data-theme="light"] .log-viewer,
+[data-theme="light"] .debug-container .log-viewer {
+  background: #f8f9fa;
+  border-color: var(--bg-3);
+  color: #333;
+}
+
+[data-theme="light"] .log-line {
+  border-color: var(--bg-2);
+}
+
+[data-theme="light"] .log-time { color: #999; }
+[data-theme="light"] .log-msg { color: #333; }
+[data-theme="light"] .log-logger { color: #7c3aed; }
+
+[data-theme="light"] input,
+[data-theme="light"] select,
+[data-theme="light"] button {
+  background: var(--bg-1);
+  border-color: var(--bg-3);
+  color: var(--text);
+}
+
+[data-theme="light"] input[type="text"],
+[data-theme="light"] select {
+  background: var(--bg-2);
+}
+
+[data-theme="light"] .debug-container {
+  color: var(--text);
+}
+
+[data-theme="light"] .stat-card .label { color: var(--text-muted); }
+[data-theme="light"] .stat-card .value { color: var(--text); }
+
+[data-theme="light"] .event-feed { background: var(--bg-1); border-color: var(--bg-3); }
+[data-theme="light"] .event-item { border-color: var(--bg-2); color: var(--text-muted); }
+
+[data-theme="light"] .player-popup {
+  background: var(--bg-1);
+  border-color: var(--bg-3);
+  box-shadow: var(--shadow);
+}
+
+[data-theme="light"] canvas { background: #f8f9fa; border-color: var(--bg-3); }
+
+[data-theme="light"] table { color: var(--text); }
+[data-theme="light"] th { border-color: var(--bg-3); }
+[data-theme="light"] td { border-color: var(--bg-2); }
