@@ -88,23 +88,23 @@
             line-height: 1.5;
             max-height: 600px;
             overflow-y: auto;
-            overflow-x: auto;
+            overflow-x: hidden;
             padding: 12px;
-            white-space: pre;
         }
         .log-line {
-            display: inline-flex;
+            display: flex;
             gap: 8px;
             padding: 2px 0;
             border-bottom: 1px solid #1a1a1a;
-            white-space: pre;
-            min-width: max-content;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
         .log-line:hover { background: #1a1a1a; }
         .log-time {
             color: #666;
-            white-space: pre;
-            min-width: 90px;
+            white-space: nowrap;
+            flex-shrink: 0;
+            min-width: 70px;
         }
         .log-level {
             font-weight: 600;
@@ -116,17 +116,21 @@
         .log-level.ERROR { color: #e74c3c; }
         .log-logger {
             color: #9b59b6;
-            min-width: 180px;
-            max-width: 280px;
-            white-space: pre;
+            flex-shrink: 0;
+            white-space: nowrap;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .log-msg {
             color: #ccc;
-            white-space: pre;
+            white-space: nowrap;
+            min-width: 0;
         }
         .log-thrown {
             color: #e74c3c;
-            white-space: pre;
+            white-space: pre-wrap;
+            word-break: break-all;
             margin-top: 4px;
             padding-left: 20px;
             border-left: 2px solid #e74c3c;
