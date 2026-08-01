@@ -44,6 +44,10 @@ public class ApiHandler implements HttpHandler {
             } else if (path.startsWith("/api/games/")) {
                 String gameId = path.substring("/api/games/".length());
                 response = gameDetail(gameId);
+            } else if ("/api/debug/logs".equals(path)) {
+                response = LogCaptureHandler.getAllLogsAsJson();
+            } else if ("/api/debug/status".equals(path)) {
+                response = debugStatus();
             } else {
                 response = "{\"error\":\"Not found\"}";
                 status = 404;
@@ -171,6 +175,23 @@ public class ApiHandler implements HttpHandler {
         }
         sb.append("]");
         return sb.toString();
+    }
+
+    private String debugStatus() {
+        Runtime rt = Runtime.getRuntime();
+        return "{"
+                + "\"port\":" + server.hashCode() // just a placeholder, we don't store port
+                + ",\"freeMemory\":" + rt.freeMemory()
+                + ",\"totalMemory\":" + rt.totalMemory()
+                + ",\"maxMemory\":" + rt.maxMemory()
+                + ",\"usedMemory\":" + (rt.totalMemory() - rt.freeMemory())
+                + ",\"processors\":" + rt.availableProcessors()
+                + ",\"threadCount\":" + Thread.activeCount()
+                + ",\"gameCount\":" + server.getGameList().size()
+                + ",\"playersNotInGame\":" + server.getNotInGame().size()
+                + ",\"playersInGame\":" + server.getPlayerInGame().size()
+                + ",\"timestamp\":" + System.currentTimeMillis()
+                + "}";
     }
 
     private void sendResponse(HttpExchange exchange, int status, String response) throws IOException {
