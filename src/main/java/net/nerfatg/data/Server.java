@@ -25,7 +25,16 @@ public class Server {
     }
 
     public Game getGame(String gameId){
-        return getGameList().get(gameId);
+        Game g = gameList.get(gameId);
+        if (g != null) return g;
+        // Try with trimmed id (strip null bytes from fixed-width strings)
+        String trimmed = gameId.replace("\u0000", "").trim();
+        for (Map.Entry<String, Game> entry : gameList.entrySet()) {
+            if (entry.getKey().replace("\u0000", "").trim().equals(trimmed)) {
+                return entry.getValue();
+            }
+        }
+        return null;
     }
 
     public Map<String, String> getPlayerInGame() {return Collections.unmodifiableMap(playerInGame); }
