@@ -20,17 +20,22 @@ public class Server {
         return instance;
     }
 
+    private String trim(String s) {
+        if (s == null) return null;
+        return s.replace("\u0000", "").trim();
+    }
+
     public Map<String, Game> getGameList(){
         return Collections.unmodifiableMap(gameList);
     }
 
     public Game getGame(String gameId){
+        if (gameId == null) return null;
         Game g = gameList.get(gameId);
         if (g != null) return g;
-        // Try with trimmed id (strip null bytes from fixed-width strings)
-        String trimmed = gameId.replace("\u0000", "").trim();
+        String trimmed = trim(gameId);
         for (Map.Entry<String, Game> entry : gameList.entrySet()) {
-            if (entry.getKey().replace("\u0000", "").trim().equals(trimmed)) {
+            if (trim(entry.getKey()).equals(trimmed)) {
                 return entry.getValue();
             }
         }
@@ -40,7 +45,16 @@ public class Server {
     public Map<String, String> getPlayerInGame() {return Collections.unmodifiableMap(playerInGame); }
 
     public String getPlayerAttendingGame(String playerId){
-        return playerInGame.get(playerId);
+        if (playerId == null) return null;
+        String gid = playerInGame.get(playerId);
+        if (gid != null) return gid;
+        String trimmed = trim(playerId);
+        for (Map.Entry<String, String> entry : playerInGame.entrySet()) {
+            if (trim(entry.getKey()).equals(trimmed)) {
+                return entry.getValue();
+            }
+        }
+        return null;
     }
 
     public Map<String, Player> getNotInGame() {return Collections.unmodifiableMap(notInGame); }
@@ -51,23 +65,56 @@ public class Server {
     }
 
     public void removeGame(String gameId){
-        for(String playerId : gameList.get(gameId).getPlayerList().keySet()){
-            removePlayerFromGame(gameId, playerId);
+        Game g = getGame(gameId);
+        if (g == null) return;
+        for(String playerId : g.getPlayerList().keySet()){
+            removePlayerFromGame(g.getGameId(), playerId);
         }
-
-        gameList.remove(gameId);
+        gameList.remove(g.getGameId());
     }
 
     public void addOrReplacePlayerInGame(String gameId, String playerId){
-        gameList.get(gameId).addOrReplacePlayer(notInGame.get(playerId));
+        Game game = getGame(gameId);
+        if (game == null) return;
+        // Find the player in notInGame (with null-byte tolerant lookup)
+        Player player = notInGame.get(playerId);
+        if (player == null) {
+            String trimmed = trim(playerId);
+            for (Map.Entry<String, Player> entry : notInGame.entrySet()) {
+                if (trim(entry.getKey()).equals(trimmed)) {
+                    player = entry.getValue();
+                    notInGame.remove(entry.getKey());
+                    break;
+                }
+            }
+        } else {
+            notInGame.remove(playerId);
+        }
+        if (player == null) return;
+
+        game.addOrReplacePlayer(player);
         playerInGame.put(playerId, gameId);
-        notInGame.remove(playerId);
     }
 
     public void removePlayerFromGame(String gameId, String playerId){
-        Player player = gameList.get(gameId).getPlayerList().get(playerId);
-        notInGame.put(playerId, new Player(player.getId(), player.getName())); //reseting the player so it only holds the id and name
-        gameList.get(gameId).removePlayer(playerId);
+        Game game = getGame(gameId);
+        if (game == null) return;
+        Player player = game.getPlayer(playerId);
+        if (player == null) {
+            // Try with trimmed id
+            String trimmed = trim(playerId);
+            for (Map.Entry<String, Player> entry : game.getPlayerList().entrySet()) {
+                if (trim(entry.getKey()).equals(trimmed)) {
+                    player = entry.getValue();
+                    playerId = entry.getKey();
+                    break;
+                }
+            }
+        }
+        if (player == null) return;
+
+        notInGame.put(playerId, new Player(player.getId(), player.getName()));
+        game.removePlayer(playerId);
         playerInGame.remove(playerId);
     }
 
@@ -76,11 +123,27 @@ public class Server {
     }
 
     public void playerDisconectedFromServer(String playerid){
+        if(playerid == null) return;
         if(notInGame.containsKey(playerid)){
             notInGame.remove(playerid);
         }
-        else{
-            removePlayerFromGame(getPlayerAttendingGame(playerid), playerid);
+        else {
+            // Try trimmed lookup
+            String trimmed = trim(playerid);
+            boolean found = false;
+            for (String key : notInGame.keySet()) {
+                if (trim(key).equals(trimmed)) {
+                    notInGame.remove(key);
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                String gameId = getPlayerAttendingGame(playerid);
+                if (gameId != null) {
+                    removePlayerFromGame(gameId, playerid);
+                }
+            }
         }
     }
 }
