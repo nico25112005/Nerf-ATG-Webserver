@@ -192,7 +192,7 @@ public class ApiHandler implements HttpHandler {
         for (PacketType type : PacketType.values()) {
             if (!first) sb.append(",");
             first = false;
-            sb.append(""").append(escapeJson(type.name())).append("":");
+            sb.append("\"").append(escapeJson(type.name())).append("\":");
             sb.append(counts.getOrDefault(type, 0L));
         }
         sb.append("}");
