@@ -31,6 +31,7 @@
         </div>
       </div>
       <div class="header-right">
+        <button id="theme-toggle" class="icon-btn" title="Toggle theme">🌙</button>
         <span class="live-indicator"><span class="dot"></span> Live</span>
       </div>
     </header>
@@ -46,7 +47,46 @@
         <ul id="player-list" class="player-list">
           <li class="empty">No players yet.</li>
         </ul>
+        <div class="event-feed-section">
+          <div class="event-feed-header">
+            <h3>Events</h3>
+            <button id="clear-events" class="text-btn" title="Clear events">Clear</button>
+          </div>
+          <ul id="event-feed" class="event-feed"></ul>
+        </div>
       </aside>
+    </div>
+  </div>
+
+  <div id="player-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-card">
+      <button class="modal-close" aria-label="Close">&times;</button>
+      <div class="modal-header">
+        <h2 id="modal-name">Player</h2>
+        <span id="modal-team" class="badge">-</span>
+      </div>
+      <div class="modal-body">
+        <div class="modal-stat">
+          <span class="modal-label">Health</span>
+          <span id="modal-health" class="modal-value">0</span>
+          <div class="health-bar modal-health-bar">
+            <div id="modal-health-fill" class="health-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+        <div class="modal-stat">
+          <span class="modal-label">Weapon</span>
+          <span id="modal-weapon" class="modal-value">–</span>
+        </div>
+        <div class="modal-stat">
+          <span class="modal-label">Coordinates</span>
+          <span id="modal-coords" class="modal-value coords">–</span>
+        </div>
+        <div class="modal-stat" id="modal-joined-row">
+          <span class="modal-label">Joined</span>
+          <span id="modal-joined" class="modal-value">–</span>
+        </div>
+      </div>
     </div>
   </div>
 
