@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nerf-ATG Game View</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app game-app">
+    <header class="game-header">
+      <div class="header-left">
+        <a href="/" class="back-link">← Back to games</a>
+        <h1 id="game-title">Game</h1>
+        <span id="game-type" class="badge">-</span>
+      </div>
+      <div class="header-center">
+        <div class="stat">
+          <span class="stat-value" id="player-count">0</span>
+          <span class="stat-label">Players</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value" id="ready-count">0</span>
+          <span class="stat-label">Ready</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value" id="elapsed-time">00:00</span>
+          <span class="stat-label">Elapsed</span>
+        </div>
+      </div>
+      <div class="header-right">
+        <span class="live-indicator"><span class="dot"></span> Live</span>
+      </div>
+    </header>
+
+    <div class="game-layout">
+      <div id="map" class="map-container"></div>
+
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <h2>Players</h2>
+          <span id="last-updated">–</span>
+        </div>
+        <ul id="player-list" class="player-list">
+          <li class="empty">No players yet.</li>
+        </ul>
+      </aside>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="js/game.js"></script>
+</body>
+</html>

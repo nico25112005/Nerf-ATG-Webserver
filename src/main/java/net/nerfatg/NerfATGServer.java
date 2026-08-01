@@ -5,9 +5,11 @@ import jline.console.ConsoleReader;
 import net.nerfatg.command.CommandHandler;
 import net.nerfatg.command.CommandScanner;
 import net.nerfatg.command.commands.*;
+import net.nerfatg.data.Server;
 import net.nerfatg.handlers.*;
 import net.nerfatg.proxy.Proxy;
 import net.nerfatg.proxy.packet.PacketType;
+import net.nerfatg.web.DashboardServer;
 import net.nerfatg.task.Task;
 import net.nerfatg.task.TaskScheduler;
 
@@ -36,6 +38,7 @@ public class NerfATGServer {
     private final ConsoleReader consoleReader;
 
     private final Proxy proxy;
+    private final DashboardServer dashboardServer;
 
     public NerfATGServer() throws IOException {
         this.properties = new Properties();
@@ -53,6 +56,8 @@ public class NerfATGServer {
         this.proxy.registerHandle(PacketType.PlayerStatus, new PlayerStatusHandler());
         this.proxy.registerHandle(PacketType.QuitGame, new QuitGameHandler());
         this.proxy.registerHandle(PacketType.Ping, new PingHandler());
+
+        this.dashboardServer = new DashboardServer(Server.Initalize(), properties);
 
         this.taskScheduler = new TaskScheduler();
         this.commandHandler = new CommandHandler(this.taskScheduler,
@@ -96,6 +101,7 @@ public class NerfATGServer {
     }
 
     private void launch(String[] args) {
+        this.dashboardServer.start();
         this.proxy.launch();
     }
 
