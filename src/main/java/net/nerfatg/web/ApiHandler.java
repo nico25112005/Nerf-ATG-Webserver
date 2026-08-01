@@ -46,7 +46,7 @@ public class ApiHandler implements HttpHandler {
                 response = listBases(gameId);
             } else if (path.startsWith("/api/games/")) {
                 String gameId = path.substring("/api/games/".length());
-                response = gameDetail(gameId);
+                response = gameDetail(trimId(gameId));
             } else if ("/api/debug/logs".equals(path)) {
                 response = LogCaptureHandler.getAllLogsAsJson();
             } else if ("/api/debug/status".equals(path)) {
@@ -88,7 +88,7 @@ public class ApiHandler implements HttpHandler {
     }
 
     private String gameDetail(String gameId) {
-        Game game = server.getGame(gameId);
+        Game game = server.getGame(trimId(gameId));
         if (game == null) {
             return "{\"error\":\"Game not found\"}";
         }
@@ -96,7 +96,7 @@ public class ApiHandler implements HttpHandler {
     }
 
     private String listPlayers(String gameId) {
-        Game game = server.getGame(gameId);
+        Game game = server.getGame(trimId(gameId));
         if (game == null) {
             return "{\"error\":\"Game not found\"}";
         }
@@ -104,7 +104,7 @@ public class ApiHandler implements HttpHandler {
     }
 
     private String listBases(String gameId) {
-        Game game = server.getGame(gameId);
+        Game game = server.getGame(trimId(gameId));
         if (game == null) {
             return "{\"error\":\"Game not found\"}";
         }
@@ -113,7 +113,7 @@ public class ApiHandler implements HttpHandler {
 
     private String gameSummaryJson(Game game) {
         return "{"
-                + "\"gameId\":\"" + escapeJson(game.getGameId()) + "\""
+                + "\"gameId\":\"" + escapeJson(trimId(game.getGameId())) + "\""
                 + ",\"gameName\":\"" + escapeJson(game.getGameName()) + "\""
                 + ",\"gameType\":\"" + game.getGameType().name() + "\""
                 + ",\"maxPlayers\":" + game.getMaxPlayers()
@@ -124,7 +124,7 @@ public class ApiHandler implements HttpHandler {
 
     private String gameDetailJson(Game game) {
         return "{"
-                + "\"gameId\":\"" + escapeJson(game.getGameId()) + "\""
+                + "\"gameId\":\"" + escapeJson(trimId(game.getGameId())) + "\""
                 + ",\"gameName\":\"" + escapeJson(game.getGameName()) + "\""
                 + ",\"gameType\":\"" + game.getGameType().name() + "\""
                 + ",\"maxPlayers\":" + game.getMaxPlayers()
@@ -148,6 +148,11 @@ public class ApiHandler implements HttpHandler {
         return sb.toString();
     }
 
+    private String trimId(String id) {
+        if (id == null) return "";
+        return id.replace("\u0000", "").trim();
+    }
+
     private String playerJson(Player player) {
         GPS gps = player.getGps();
         String team = player.getTeam() != null ? "\"" + player.getTeam().name() + "\"" : "null";
@@ -156,7 +161,7 @@ public class ApiHandler implements HttpHandler {
         String lon = gps != null ? String.valueOf(gps.getLongitude()) : "null";
 
         return "{"
-                + "\"id\":\"" + escapeJson(player.getId()) + "\""
+                + "\"id\":\"" + escapeJson(trimId(player.getId())) + "\""
                 + ",\"name\":\"" + escapeJson(player.getName()) + "\""
                 + ",\"health\":" + player.getHealth()
                 + ",\"team\":" + team
